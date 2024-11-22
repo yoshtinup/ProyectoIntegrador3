@@ -3,6 +3,7 @@ import 'package:integrador/Pages/Register_User.dart';
 import 'package:integrador/Pages/home_admin.dart';
 import 'package:integrador/Pages/home_page.dart';
 import 'package:integrador/Pages/home_user.dart';
+import 'package:integrador/Pages/QRScanPage.dart';
 import 'pages/user_view.dart';
 import 'pages/admin_view.dart';
 
@@ -22,7 +23,8 @@ class MyApp extends StatelessWidget {
         '/admin': (context) => AdminView(),
         '/register': (context) => RegisterView(),
         '/userDashboard': (context) => UserDashboardView(),
-        '/homeAdmin': (context) =>  HomeAdminView(), // New route for admin home
+        '/homeAdmin': (context) =>  HomeAdminView(),
+        '/qrscan': (context) => QRScanPage(), // New route for admin home
       },
     );
   }

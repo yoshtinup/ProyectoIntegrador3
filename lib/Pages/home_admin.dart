@@ -64,7 +64,7 @@ class HomeAdminView extends StatelessWidget {
                     icon: Icons.qr_code_scanner,
                     title: 'Escanear QR',
                     onTap: () {
-                      // Acción de escanear QR
+                      Navigator.pushNamed(context, '/qrscan');
                     },
                   ),
                   const SizedBox(height: 10),
