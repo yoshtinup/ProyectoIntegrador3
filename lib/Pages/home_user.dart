@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart'; // Para guardar archivos temporales
 
 class UserDashboardView extends StatefulWidget {
   const UserDashboardView({Key? key}) : super(key: key);
@@ -22,28 +23,56 @@ class _UserDashboardViewState extends State<UserDashboardView> {
 
   final ImagePicker _picker = ImagePicker();
 
-  // Subir imagen a la API y obtener la URL
-  Future<String?> _uploadImage(File imageFile) async {
-    final url = Uri.parse('http://44.214.23.160:3000/upload'); // Cambia según tu configuración
+  // Subir archivo al servidor (para imágenes y QR)
+  Future<String?> _uploadFile(File file, String endpoint) async {
+    final url = Uri.parse('http://44.214.23.160:3000/$endpoint');
     final request = http.MultipartRequest('POST', url);
-    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+    request.files.add(await http.MultipartFile.fromPath(
+      endpoint == 'save-qr' ? 'qr' : 'image', // Cambiar el campo según el endpoint
+      file.path,
+    ));
 
     try {
       final response = await request.send();
       if (response.statusCode == 201) {
         final responseData = await response.stream.bytesToString();
         final jsonResponse = jsonDecode(responseData);
-        return 'http://44.214.23.160:3000/image/${jsonResponse['filename']}'; // Construir la URL completa
+        return 'http://44.214.23.160:3000/image/${jsonResponse['filename']}';
       } else {
-        throw Exception('Error al subir la imagen: ${response.statusCode}');
+        throw Exception('Error al subir archivo: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error al subir la imagen: $e');
+      print('Error al subir archivo: $e');
       return null;
     }
   }
 
-  // Generar el QR incluyendo la URL de la imagen
+  // Guardar el QR como archivo de imagen temporal
+  Future<File?> _saveQrAsImage() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/qr_code.png';
+
+      final qrPainter = QrPainter(
+        data: qrData,
+        version: QrVersions.auto,
+        gapless: false,
+      );
+
+      final picData = await qrPainter.toImageData(2048); // Alta resolución
+      final bytes = picData!.buffer.asUint8List();
+
+      final file = File(filePath);
+      await file.writeAsBytes(bytes);
+
+      return file;
+    } catch (e) {
+      print('Error al guardar el QR: $e');
+      return null;
+    }
+  }
+
+  // Generar el QR y subirlo
   void _generateQRCode() async {
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
@@ -58,8 +87,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return;
     }
 
-    // Subir la imagen y obtener la URL
-    final imageUrl = await _uploadImage(_selectedImage!);
+    // Subir la imagen seleccionada y obtener la URL
+    final imageUrl = await _uploadFile(_selectedImage!, 'upload');
     if (imageUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -70,15 +99,50 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return;
     }
 
+    // Preparar datos para el QR
     final userData = {
       'Nombre': _nameController.text,
       'Email': _emailController.text,
       'Teléfono': _phoneController.text,
-      'ImagenURL': imageUrl, // Añadir la URL de la imagen al QR
+      'ImagenURL': imageUrl,
     };
 
     setState(() {
       qrData = jsonEncode(userData);
+    });
+
+    // Generar el QR como archivo
+    final qrFile = await _saveQrAsImage();
+    if (qrFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error al generar el archivo del QR. Intenta nuevamente.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Subir el archivo QR al servidor
+    final qrUrl = await _uploadFile(qrFile, 'save-qr');
+    if (qrUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error al subir el QR. Intenta nuevamente.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('QR generado y subido exitosamente: $qrUrl'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    setState(() {
       _showQR = true;
     });
   }
