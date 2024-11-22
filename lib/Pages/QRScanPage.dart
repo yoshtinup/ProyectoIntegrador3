@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter/services.dart'; // Para copiar al portapapeles
+import 'dart:convert'; // Para decodificar JSON
 
 class QRScanPage extends StatefulWidget {
   const QRScanPage({Key? key}) : super(key: key);
@@ -11,7 +12,9 @@ class QRScanPage extends StatefulWidget {
 
 class _QRScanPageState extends State<QRScanPage> {
   String qrCode = 'No se ha escaneado ningún código';
+  String? imageUrl;
   MobileScannerController cameraController = MobileScannerController();
+  bool _isDialogVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -78,10 +81,13 @@ class _QRScanPageState extends State<QRScanPage> {
                   onDetect: (capture) {
                     final List<Barcode> barcodes = capture.barcodes;
                     for (final barcode in barcodes) {
-                      setState(() {
-                        qrCode = barcode.rawValue ?? 'Código QR no válido';
-                      });
-                      _showResultDialog(context, qrCode);
+                      if (!_isDialogVisible) {
+                        setState(() {
+                          qrCode = barcode.rawValue ?? 'Código QR no válido';
+                          imageUrl = _extractImageUrl(qrCode);
+                        });
+                        _showResultDialog(context, qrCode);
+                      }
                     }
                   },
                 ),
@@ -123,6 +129,19 @@ class _QRScanPageState extends State<QRScanPage> {
                     style: const TextStyle(fontSize: 16, color: Colors.white70),
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 20),
+                  if (imageUrl != null)
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ShowImageScreen(imageUrl: imageUrl!),
+                          ),
+                        );
+                      },
+                      child: const Text('Ver Imagen'),
+                    ),
                 ],
               ),
             ),
@@ -133,6 +152,9 @@ class _QRScanPageState extends State<QRScanPage> {
   }
 
   void _showResultDialog(BuildContext context, String code) {
+    setState(() {
+      _isDialogVisible = true;
+    });
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -159,6 +181,19 @@ class _QRScanPageState extends State<QRScanPage> {
                 Navigator.of(context).pop();
               },
             ),
+            if (imageUrl != null)
+              TextButton(
+                child: const Text('Ver Imagen', style: TextStyle(color: Colors.tealAccent)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ShowImageScreen(imageUrl: imageUrl!),
+                    ),
+                  );
+                },
+              ),
             TextButton(
               child: const Text('Cerrar', style: TextStyle(color: Colors.tealAccent)),
               onPressed: () {
@@ -168,12 +203,44 @@ class _QRScanPageState extends State<QRScanPage> {
           ],
         );
       },
-    );
+    ).then((_) {
+      setState(() {
+        _isDialogVisible = false;
+      });
+    });
+  }
+
+  String? _extractImageUrl(String code) {
+    try {
+      final Map<String, dynamic> data = jsonDecode(code);
+      return data['ImagenURL'] as String?;
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
   void dispose() {
     cameraController.dispose();
     super.dispose();
+  }
+}
+
+class ShowImageScreen extends StatelessWidget {
+  final String imageUrl;
+
+  ShowImageScreen({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Imagen Escaneada'),
+        backgroundColor: Colors.black,
+      ),
+      body: Center(
+        child: Image.network(imageUrl),
+      ),
+    );
   }
 }
