@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:flutter/services.dart'; // Para copiar al portapapeles
+import 'QRDetailsPage.dart';  // Importa la vista nueva
+import 'dart:convert';
+
 
 class QRScanPage extends StatefulWidget {
   const QRScanPage({Key? key}) : super(key: key);
@@ -10,164 +12,106 @@ class QRScanPage extends StatefulWidget {
 }
 
 class _QRScanPageState extends State<QRScanPage> {
-  String qrCode = 'No se ha escaneado ningún código';
   MobileScannerController cameraController = MobileScannerController();
+  bool isNavigating = false; // Control para evitar múltiples navegaciones
+
+  void _processQRContent(String content) {
+    try {
+      final jsonData = json.decode(content);
+      if (!isNavigating) {
+        isNavigating = true; // Evitar múltiples navegaciones
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => QRDetailsPage(jsonData: jsonData),
+          ),
+        ).then((_) {
+          isNavigating = false; // Permitir futuras navegaciones al regresar
+        });
+      }
+    } catch (e) {
+      // Manejo de error si el contenido no es JSON válido
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El código QR no contiene datos válidos'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
-          'Escanear Código QR',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: ValueListenableBuilder(
-              valueListenable: cameraController.torchState,
-              builder: (context, state, child) {
-                switch (state) {
-                  case TorchState.off:
-                    return const Icon(Icons.flash_off, color: Colors.white);
-                  case TorchState.on:
-                    return const Icon(Icons.flash_on, color: Colors.yellowAccent);
-                }
-              },
-            ),
-            onPressed: () => cameraController.toggleTorch(),
-          ),
-          IconButton(
-            icon: ValueListenableBuilder(
-              valueListenable: cameraController.cameraFacingState,
-              builder: (context, state, child) {
-                switch (state) {
-                  case CameraFacing.front:
-                    return const Icon(Icons.camera_front, color: Colors.white);
-                  case CameraFacing.back:
-                    return const Icon(Icons.camera_rear, color: Colors.white);
-                }
-              },
-            ),
-            onPressed: () => cameraController.switchCamera(),
-          ),
-        ],
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            flex: 2,
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.black54,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black38,
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
+          // Fondo degradado
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.black,
+                  Color(0xFF1A1A1A),
                 ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: MobileScanner(
-                  controller: cameraController,
-                  onDetect: (capture) {
-                    final List<Barcode> barcodes = capture.barcodes;
-                    for (final barcode in barcodes) {
-                      setState(() {
-                        qrCode = barcode.rawValue ?? 'Código QR no válido';
-                      });
-                      _showResultDialog(context, qrCode);
-                    }
-                  },
-                ),
               ),
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black38,
-                    blurRadius: 10,
-                    offset: Offset(0, -4),
+          // Contenido del escáner
+          Column(
+            children: [
+              const SizedBox(height: 50),
+              const Center(
+                child: Text(
+                  'Escáner QR',
+                  style: TextStyle(
+                    color: Colors.cyanAccent,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
+                ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Contenido del QR:',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              const SizedBox(height: 20),
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF2D2D2D),
+                        const Color(0xFF1A1A1A),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: MobileScanner(
+                      controller: cameraController,
+                      onDetect: (capture) {
+                        final List<Barcode> barcodes = capture.barcodes;
+                        for (final barcode in barcodes) {
+                          _processQRContent(barcode.rawValue ?? 'Código QR no válido');
+                        }
+                      },
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    qrCode,
-                    style: const TextStyle(fontSize: 16, color: Colors.white70),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
-    );
-  }
-
-  void _showResultDialog(BuildContext context, String code) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.black,
-          title: const Text(
-            'Código QR Detectado',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: SingleChildScrollView(
-            child: Text(
-              code,
-              style: const TextStyle(color: Colors.white70),
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Copiar', style: TextStyle(color: Colors.tealAccent)),
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: code));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Código copiado al portapapeles')),
-                );
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Cerrar', style: TextStyle(color: Colors.tealAccent)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 
