@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'QRDetailsPage.dart';
-import 'dart:convert';
+
 
 class QRDetailsPage extends StatelessWidget {
   final Map<String, dynamic> jsonData;
@@ -83,18 +81,24 @@ class QRDetailsPage extends StatelessWidget {
                 if (imageUrl != null)
                   Center(
                     child: Container(
+                      width: 200,
+                      height: 200,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.cyanAccent,
+                          width: 2,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.cyanAccent.withOpacity(0.2),
-                            blurRadius: 12,
+                            color: Colors.cyanAccent.withOpacity(0.3),
+                            blurRadius: 15,
                             spreadRadius: 2,
                           ),
                         ],
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         child: Image.network(
                           imageUrl!,
                           fit: BoxFit.cover,
@@ -103,16 +107,19 @@ class QRDetailsPage extends StatelessWidget {
                               padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: Color(0xFF2D2D2D),
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(14),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.error_outline, color: Colors.white70),
                                   SizedBox(width: 8),
-                                  Text(
-                                    'No se pudo cargar la imagen',
-                                    style: TextStyle(color: Colors.white70),
+                                  Flexible(
+                                    child: Text(
+                                      'No se pudo cargar la imagen',
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -130,12 +137,15 @@ class QRDetailsPage extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Color(0xFF2D2D2D),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.cyanAccent.withOpacity(0.3)),
+                        border: Border.all(
+                          color: Colors.cyanAccent,
+                          width: 2,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
+                            color: Colors.cyanAccent.withOpacity(0.3),
+                            blurRadius: 15,
+                            spreadRadius: 2,
                           ),
                         ],
                       ),
