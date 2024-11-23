@@ -16,7 +16,7 @@ class _UserViewState extends State<UserView> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo negro
+          // Fondo degradado con textura
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -26,6 +26,11 @@ class _UserViewState extends State<UserView> {
                   Colors.black,
                   Color(0xFF1A1A1A),
                 ],
+              ),
+              image: DecorationImage(
+                image: AssetImage('assets/subtle_pattern.png'),
+                fit: BoxFit.cover,
+                opacity: 0.03,
               ),
             ),
           ),
@@ -37,12 +42,19 @@ class _UserViewState extends State<UserView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       'Iniciar Sesión',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.cyanAccent,
+                        shadows: [
+                          Shadow(
+                            color: Colors.cyanAccent,
+                            offset: Offset(0, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -72,7 +84,7 @@ class _UserViewState extends State<UserView> {
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 50, vertical: 15),
-                          backgroundColor: Colors.black,
+                          backgroundColor: Colors.black.withOpacity(0.8),
                           side: const BorderSide(
                             color: Colors.cyanAccent,
                             width: 2,
@@ -80,12 +92,15 @@ class _UserViewState extends State<UserView> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
+                          shadowColor: Colors.cyanAccent.withOpacity(0.3),
+                          elevation: 10,
                         ),
                         child: const Text(
                           'Iniciar sesión',
                           style: TextStyle(
                             color: Colors.cyanAccent,
                             fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
                       ),
@@ -100,6 +115,7 @@ class _UserViewState extends State<UserView> {
                         style: TextStyle(
                           color: Colors.cyanAccent,
                           decoration: TextDecoration.underline,
+                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -122,12 +138,19 @@ class _UserViewState extends State<UserView> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.black.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.cyanAccent,
-          width: 1,
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.cyanAccent.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
@@ -143,7 +166,7 @@ class _UserViewState extends State<UserView> {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.black,
+          fillColor: Colors.black.withOpacity(0.8),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,

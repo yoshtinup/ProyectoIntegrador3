@@ -6,7 +6,7 @@ class AdminView extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo negro con degradado
+          // Fondo degradado con textura sutil
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -17,9 +17,14 @@ class AdminView extends StatelessWidget {
                   Color(0xFF1A1A1A),
                 ],
               ),
+              image: DecorationImage(
+                image: AssetImage('assets/subtle_pattern.png'),
+                fit: BoxFit.cover,
+                opacity: 0.03,
+              ),
             ),
           ),
-          // Contenido principal centrado
+          // Contenido principal
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -49,12 +54,15 @@ class AdminView extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
+                      shadowColor: Colors.cyanAccent.withOpacity(0.3),
+                      elevation: 10,
                     ),
                     child: const Text(
                       'Iniciar Sesión',
                       style: TextStyle(
                         color: Colors.cyanAccent,
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
                   ),
@@ -67,6 +75,7 @@ class AdminView extends StatelessWidget {
                       '¿No tienes una cuenta? Regístrate aquí',
                       style: TextStyle(
                         color: Colors.cyanAccent,
+                        fontSize: 14,
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -87,19 +96,26 @@ class AdminView extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.black.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.cyanAccent,
-          width: 1,
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.cyanAccent.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: TextField(
         obscureText: obscureText,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey[600]),
+          hintStyle: TextStyle(color: Colors.grey[500]),
           prefixIcon: Icon(icon, color: Colors.cyanAccent),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),

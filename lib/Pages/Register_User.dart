@@ -39,7 +39,7 @@ class RegisterView extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo negro con degradado
+          // Fondo degradado con textura sutil
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -50,9 +50,14 @@ class RegisterView extends StatelessWidget {
                   Color(0xFF1A1A1A),
                 ],
               ),
+              image: DecorationImage(
+                image: AssetImage('assets/subtle_pattern.png'),
+                fit: BoxFit.cover,
+                opacity: 0.03,
+              ),
             ),
           ),
-          // Forma ondulada turquesa fluorescente
+          // Forma ondulada
           Positioned(
             top: MediaQuery.of(context).size.height * 0.4,
             left: 0,
@@ -61,7 +66,7 @@ class RegisterView extends StatelessWidget {
               clipper: WaveClipper(),
               child: Container(
                 height: MediaQuery.of(context).size.height * 0.6,
-                color: Colors.cyanAccent,
+                color: Colors.cyanAccent.withOpacity(0.2),
               ),
             ),
           ),
@@ -79,6 +84,13 @@ class RegisterView extends StatelessWidget {
                       color: Colors.cyanAccent,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.cyanAccent,
+                          offset: Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -137,6 +149,8 @@ class RegisterView extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
+                        shadowColor: Colors.cyanAccent.withOpacity(0.3),
+                        elevation: 10,
                       ),
                       child: const Text(
                         'Registrarse',
@@ -162,12 +176,19 @@ class RegisterView extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.black.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.cyanAccent,
-          width: 1,
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.cyanAccent.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
@@ -183,7 +204,7 @@ class RegisterView extends StatelessWidget {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.black,
+          fillColor: Colors.black.withOpacity(0.8),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),

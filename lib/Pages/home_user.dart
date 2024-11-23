@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart'; // Para guardar archivos temporales
+import 'package:path_provider/path_provider.dart';
 
 class UserDashboardView extends StatefulWidget {
   const UserDashboardView({Key? key}) : super(key: key);
@@ -28,7 +28,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     final url = Uri.parse('http://44.214.23.160:3000/$endpoint');
     final request = http.MultipartRequest('POST', url);
     request.files.add(await http.MultipartFile.fromPath(
-      endpoint == 'save-qr' ? 'qr' : 'image', // Cambiar el campo según el endpoint
+      endpoint == 'save-qr' ? 'qr' : 'image',
       file.path,
     ));
 
@@ -59,7 +59,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
         gapless: false,
       );
 
-      final picData = await qrPainter.toImageData(2048); // Alta resolución
+      final picData = await qrPainter.toImageData(2048);
       final bytes = picData!.buffer.asUint8List();
 
       final file = File(filePath);
@@ -87,7 +87,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return;
     }
 
-    // Subir la imagen seleccionada y obtener la URL
     final imageUrl = await _uploadFile(_selectedImage!, 'upload');
     if (imageUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -99,7 +98,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return;
     }
 
-    // Preparar datos para el QR
     final userData = {
       'Nombre': _nameController.text,
       'Email': _emailController.text,
@@ -111,7 +109,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       qrData = jsonEncode(userData);
     });
 
-    // Generar el QR como archivo
     final qrFile = await _saveQrAsImage();
     if (qrFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -123,7 +120,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return;
     }
 
-    // Subir el archivo QR al servidor
     final qrUrl = await _uploadFile(qrFile, 'save-qr');
     if (qrUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -175,6 +171,11 @@ class _UserDashboardViewState extends State<UserDashboardView> {
               Color(0xFF1A1A1A),
             ],
           ),
+          image: DecorationImage(
+            image: AssetImage('assets/subtle_pattern.png'),
+            fit: BoxFit.cover,
+            opacity: 0.03,
+          ),
         ),
         child: SafeArea(
           child: Center(
@@ -189,6 +190,13 @@ class _UserDashboardViewState extends State<UserDashboardView> {
                       color: Colors.cyanAccent,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.cyanAccent,
+                          offset: Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -227,11 +235,13 @@ class _UserDashboardViewState extends State<UserDashboardView> {
         ElevatedButton(
           onPressed: _pickImage,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black,
+            backgroundColor: Colors.black.withOpacity(0.8),
             side: const BorderSide(color: Colors.cyanAccent, width: 2),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+            shadowColor: Colors.cyanAccent.withOpacity(0.3),
+            elevation: 10,
           ),
           child: const Text(
             'Seleccionar Imagen',
@@ -248,11 +258,13 @@ class _UserDashboardViewState extends State<UserDashboardView> {
         ElevatedButton(
           onPressed: _generateQRCode,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black,
+            backgroundColor: Colors.black.withOpacity(0.8),
             side: const BorderSide(color: Colors.cyanAccent, width: 2),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+            shadowColor: Colors.cyanAccent.withOpacity(0.3),
+            elevation: 10,
           ),
           child: const Text(
             'Generar QR',
@@ -269,8 +281,16 @@ class _UserDashboardViewState extends State<UserDashboardView> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.black,
+            color: Colors.black.withOpacity(0.8),
             borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.cyanAccent, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.cyanAccent.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: QrImageView(
             data: qrData,
@@ -282,11 +302,13 @@ class _UserDashboardViewState extends State<UserDashboardView> {
         ElevatedButton(
           onPressed: _editData,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black,
+            backgroundColor: Colors.black.withOpacity(0.8),
             side: const BorderSide(color: Colors.cyanAccent, width: 2),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+            shadowColor: Colors.cyanAccent.withOpacity(0.3),
+            elevation: 10,
           ),
           child: const Text(
             'Editar Información',
@@ -318,7 +340,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
         ),
         filled: true,
-        fillColor: Colors.black,
+        fillColor: Colors.black.withOpacity(0.8),
       ),
     );
   }
