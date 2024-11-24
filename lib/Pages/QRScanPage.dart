@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'QRDetailsPage.dart';  // Importa la vista nueva
+import 'QRDetailsPage.dart'; // Importa la vista nueva
 import 'dart:convert';
-
 
 class QRScanPage extends StatefulWidget {
   const QRScanPage({Key? key}) : super(key: key);
@@ -76,26 +75,23 @@ class _QRScanPageState extends State<QRScanPage> {
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(8), // Espaciado interno para el borde
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(24),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF2D2D2D),
-                        const Color(0xFF1A1A1A),
-                      ],
+                    border: Border.all(
+                      color: Colors.cyanAccent, // Borde fluorescente
+                      width: 4,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                        color: Colors.cyanAccent.withOpacity(0.5),
+                        blurRadius: 15,
+                        spreadRadius: 3,
                       ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(20),
                     child: MobileScanner(
                       controller: cameraController,
                       onDetect: (capture) {
@@ -108,6 +104,43 @@ class _QRScanPageState extends State<QRScanPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Botón de linterna
+                  IconButton(
+                    icon: ValueListenableBuilder(
+                      valueListenable: cameraController.torchState,
+                      builder: (context, state, child) {
+                        return Icon(
+                          state == TorchState.off ? Icons.flash_off : Icons.flash_on,
+                          color: state == TorchState.off ? Colors.white70 : Colors.amber,
+                          size: 28,
+                        );
+                      },
+                    ),
+                    onPressed: () => cameraController.toggleTorch(),
+                  ),
+                  // Botón de cambio de cámara
+                  IconButton(
+                    icon: ValueListenableBuilder(
+                      valueListenable: cameraController.cameraFacingState,
+                      builder: (context, state, child) {
+                        return Icon(
+                          state == CameraFacing.front
+                              ? Icons.camera_front
+                              : Icons.camera_rear,
+                          color: Colors.white70,
+                          size: 28,
+                        );
+                      },
+                    ),
+                    onPressed: () => cameraController.switchCamera(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ],

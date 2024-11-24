@@ -184,6 +184,31 @@ class _UserDashboardViewState extends State<UserDashboardView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Logo con borde fluorescente
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 30),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.cyanAccent,
+                        width: 4,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.cyanAccent.withOpacity(0.6),
+                          blurRadius: 15,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/Logo.png', // Ruta del logo
+                      height: 100, // Tamaño del logo
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                   Text(
                     _showQR ? 'Tu Código QR' : 'Generador QR',
                     style: const TextStyle(

@@ -17,11 +17,6 @@ class HomePage extends StatelessWidget {
                   Color(0xFF1A1A1A),
                 ],
               ),
-              image: DecorationImage(
-                image: AssetImage('assets/subtle_pattern.png'),
-                fit: BoxFit.cover,
-                opacity: 0.03,
-              ),
             ),
           ),
           // Contenido principal centrado
@@ -30,30 +25,26 @@ class HomePage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.all(8), // Espaciado interno
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.cyanAccent.withOpacity(0.3),
-                      width: 1,
+                      color: Colors.cyanAccent, // Borde fosforescente
+                      width: 4,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.cyanAccent.withOpacity(0.6),
+                        blurRadius: 15,
+                        spreadRadius: 5,
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    'Bienvenido',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.cyanAccent,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          color: Colors.cyanAccent,
-                          offset: Offset(0, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
+                  child: Image.asset(
+                    'assets/Logo.png', // Ruta del logo
+                    height: 100, // Altura del logo
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -62,7 +53,8 @@ class HomePage extends StatelessWidget {
                     Navigator.pushNamed(context, '/user');
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 50, vertical: 15),
                     backgroundColor: Colors.black.withOpacity(0.8),
                     side: const BorderSide(color: Colors.cyanAccent, width: 2),
                     shape: RoundedRectangleBorder(
@@ -86,7 +78,8 @@ class HomePage extends StatelessWidget {
                     Navigator.pushNamed(context, '/admin');
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 50, vertical: 15),
                     backgroundColor: Colors.black.withOpacity(0.8),
                     side: const BorderSide(color: Colors.cyanAccent, width: 2),
                     shape: RoundedRectangleBorder(

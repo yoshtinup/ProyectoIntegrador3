@@ -6,6 +6,7 @@ import 'package:integrador/Pages/home_user.dart';
 import 'package:integrador/Pages/QRScanPage.dart';
 import 'pages/user_view.dart';
 import 'pages/admin_view.dart';
+import 'Pages/Logoview.dart';
 
 void main() => runApp(MyApp());
 
@@ -16,15 +17,16 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Navigation Demo',
       theme: ThemeData(primarySwatch: Colors.blue),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
+      initialRoute: '/logoView', // Cambiar aquí la ruta inicial
       routes: {
         '/': (context) => HomePage(),
         '/user': (context) => UserView(),
         '/admin': (context) => AdminView(),
         '/register': (context) => RegisterView(),
         '/userDashboard': (context) => UserDashboardView(),
-        '/homeAdmin': (context) =>  HomeAdminView(),
-        '/qrscan': (context) => QRScanPage(), // New route for admin home
+        '/homeAdmin': (context) => HomeAdminView(),
+        '/qrscan': (context) => QRScanPage(),
+        '/logoView': (context) => LogoView(), // Nueva ruta de la vista con el logo
       },
     );
   }

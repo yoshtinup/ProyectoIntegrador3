@@ -27,11 +27,6 @@ class _UserViewState extends State<UserView> {
                   Color(0xFF1A1A1A),
                 ],
               ),
-              image: DecorationImage(
-                image: AssetImage('assets/subtle_pattern.png'),
-                fit: BoxFit.cover,
-                opacity: 0.03,
-              ),
             ),
           ),
           // Contenido principal centrado
@@ -42,6 +37,31 @@ class _UserViewState extends State<UserView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Logo con borde fluorescente
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 30),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.cyanAccent,
+                          width: 4,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.cyanAccent.withOpacity(0.6),
+                            blurRadius: 15,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/Logo.png', // Ruta del logo
+                        height: 100, // Tamaño del logo
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                     const Text(
                       'Iniciar Sesión',
                       style: TextStyle(
