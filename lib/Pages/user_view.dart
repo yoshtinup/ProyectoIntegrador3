@@ -16,7 +16,7 @@ class _UserViewState extends State<UserView> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo negro
+          // Fondo degradado con textura
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -37,12 +37,44 @@ class _UserViewState extends State<UserView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    // Logo con borde fluorescente
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 30),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.cyanAccent,
+                          width: 4,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.cyanAccent.withOpacity(0.6),
+                            blurRadius: 15,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/Logo.png', // Ruta del logo
+                        height: 100, // Tamaño del logo
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const Text(
                       'Iniciar Sesión',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.cyanAccent,
+                        shadows: [
+                          Shadow(
+                            color: Colors.cyanAccent,
+                            offset: Offset(0, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -72,7 +104,7 @@ class _UserViewState extends State<UserView> {
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 50, vertical: 15),
-                          backgroundColor: Colors.black,
+                          backgroundColor: Colors.black.withOpacity(0.8),
                           side: const BorderSide(
                             color: Colors.cyanAccent,
                             width: 2,
@@ -80,12 +112,15 @@ class _UserViewState extends State<UserView> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
+                          shadowColor: Colors.cyanAccent.withOpacity(0.3),
+                          elevation: 10,
                         ),
                         child: const Text(
                           'Iniciar sesión',
                           style: TextStyle(
                             color: Colors.cyanAccent,
                             fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
                       ),
@@ -100,6 +135,7 @@ class _UserViewState extends State<UserView> {
                         style: TextStyle(
                           color: Colors.cyanAccent,
                           decoration: TextDecoration.underline,
+                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -122,12 +158,19 @@ class _UserViewState extends State<UserView> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.black.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.cyanAccent,
-          width: 1,
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.cyanAccent.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
@@ -143,7 +186,7 @@ class _UserViewState extends State<UserView> {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.black,
+          fillColor: Colors.black.withOpacity(0.8),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,

@@ -39,7 +39,7 @@ class RegisterView extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo negro con degradado
+          // Fondo degradado con textura sutil
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -50,18 +50,10 @@ class RegisterView extends StatelessWidget {
                   Color(0xFF1A1A1A),
                 ],
               ),
-            ),
-          ),
-          // Forma ondulada turquesa fluorescente
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.4,
-            left: 0,
-            right: 0,
-            child: ClipPath(
-              clipper: WaveClipper(),
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.6,
-                color: Colors.cyanAccent,
+              image: DecorationImage(
+                image: AssetImage('assets/subtle_pattern.png'),
+                fit: BoxFit.cover,
+                opacity: 0.03,
               ),
             ),
           ),
@@ -72,13 +64,46 @@ class RegisterView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 30),
+                  // Logo con borde fluorescente
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 30),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.cyanAccent,
+                          width: 4,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.cyanAccent.withOpacity(0.6),
+                            blurRadius: 15,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/Logo.png', // Ruta del logo
+                        height: 100, // Tamaño del logo
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
                   const Text(
                     'Registro de Usuario',
                     style: TextStyle(
                       color: Colors.cyanAccent,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.cyanAccent,
+                          offset: Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -133,14 +158,24 @@ class RegisterView extends StatelessWidget {
                       onPressed: registerUser,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                        backgroundColor: Colors.cyanAccent,
+                        backgroundColor: Colors.black,
+                        side: const BorderSide(
+                          color: Colors.cyanAccent, // Borde turquesa fluorescente
+                          width: 2,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
+                        shadowColor: Colors.cyanAccent.withOpacity(0.3),
+                        elevation: 10,
                       ),
                       child: const Text(
                         'Registrarse',
-                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.cyanAccent, // Texto turquesa fluorescente
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -162,12 +197,19 @@ class RegisterView extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.black.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.cyanAccent,
-          width: 1,
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.cyanAccent.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
@@ -183,40 +225,10 @@ class RegisterView extends StatelessWidget {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.black,
+          fillColor: Colors.black.withOpacity(0.8),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );
-  }
-}
-
-class WaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    path.lineTo(0, size.height * 0.3);
-
-    var firstControlPoint = Offset(size.width * 0.25, size.height * 0.5);
-    var firstEndPoint = Offset(size.width * 0.5, size.height * 0.4);
-
-    var secondControlPoint = Offset(size.width * 0.75, size.height * 0.3);
-    var secondEndPoint = Offset(size.width, size.height * 0.5);
-
-    path.quadraticBezierTo(
-        firstControlPoint.dx, firstControlPoint.dy, firstEndPoint.dx, firstEndPoint.dy);
-    path.quadraticBezierTo(
-        secondControlPoint.dx, secondControlPoint.dy, secondEndPoint.dx, secondEndPoint.dy);
-
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) {
-    return false;
   }
 }
