@@ -99,7 +99,7 @@ class _UserViewState extends State<UserView> {
                             _isEmailPasswordEntered = true;
                           });
                           Navigator.pushReplacementNamed(
-                              context, '/userDashboard');
+                              context, '/homeUsuario');
                         },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
