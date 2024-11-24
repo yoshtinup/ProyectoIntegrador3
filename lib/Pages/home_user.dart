@@ -14,9 +14,11 @@ class UserDashboardView extends StatefulWidget {
 }
 
 class _UserDashboardViewState extends State<UserDashboardView> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _tipoController = TextEditingController();
+  final TextEditingController _codigoController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _eventoController = TextEditingController();
+  final TextEditingController _lugarController = TextEditingController();
   String qrData = "";
   bool _showQR = false;
   File? _selectedImage;
@@ -74,13 +76,16 @@ class _UserDashboardViewState extends State<UserDashboardView> {
 
   // Generar el QR y subirlo
   void _generateQRCode() async {
-    if (_nameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
+    if (_tipoController.text.isEmpty ||
+        _codigoController.text.isEmpty ||
         _phoneController.text.isEmpty ||
+        _eventoController.text.isEmpty ||
+        _lugarController.text.isEmpty ||
         _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor completa todos los campos y selecciona una imagen'),
+          content: Text(
+              'Por favor completa todos los campos y selecciona una imagen'),
           backgroundColor: Colors.black,
         ),
       );
@@ -99,9 +104,11 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     }
 
     final userData = {
-      'Nombre': _nameController.text,
-      'Email': _emailController.text,
-      'Teléfono': _phoneController.text,
+      'tipo': _tipoController.text,
+      'codigo': _codigoController.text,
+      'telefonoTaxi': _phoneController.text,
+      'evento': _eventoController.text,
+      'lugar': _lugarController.text,
       'ImagenURL': imageUrl,
     };
 
@@ -113,7 +120,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     if (qrFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Error al generar el archivo del QR. Intenta nuevamente.'),
+          content:
+              Text('Error al generar el archivo del QR. Intenta nuevamente.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -240,21 +248,33 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         _buildTextField(
-          controller: _nameController,
-          label: 'Nombre',
+          controller: _tipoController,
+          label: 'Tipo',
           icon: Icons.person_outline,
         ),
         const SizedBox(height: 16),
         _buildTextField(
-          controller: _emailController,
-          label: 'Correo',
-          icon: Icons.email_outlined,
+          controller: _codigoController,
+          label: 'Codigo',
+          icon: Icons.code,
         ),
         const SizedBox(height: 16),
         _buildTextField(
           controller: _phoneController,
           label: 'Teléfono',
           icon: Icons.phone_outlined,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _eventoController,
+          label: 'Evento',
+          icon: Icons.event,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _lugarController,
+          label: 'Direccion',
+          icon: Icons.directions,
         ),
         const SizedBox(height: 16),
         ElevatedButton(
@@ -270,7 +290,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           ),
           child: const Text(
             'Seleccionar Imagen',
-            style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.cyanAccent, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 16),
@@ -293,7 +314,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           ),
           child: const Text(
             'Generar QR',
-            style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.cyanAccent, fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -337,7 +359,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           ),
           child: const Text(
             'Editar Información',
-            style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.cyanAccent, fontWeight: FontWeight.bold),
           ),
         ),
       ],

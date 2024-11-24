@@ -1,6 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AdminView extends StatelessWidget {
+  final TextEditingController usuarioController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  Future<void> loginUser(BuildContext context) async {
+    final url = Uri.parse('http://localhost:3002/api/v1/loginNew');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'usuario': usuarioController.text,
+        'codigo': passwordController.text,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+
+      if (responseData.containsKey('message') &&
+          responseData['message'] == 'Login successful') {
+        // Guardar el token recibido (si es necesario)
+        final token = responseData['token'];
+        print('Token recibido: $token');
+
+        // Redirigir a la página de administrador
+        Navigator.pushReplacementNamed(context, '/homeAdmin');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${responseData['message']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error en el inicio de sesión: ${response.body}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,20 +97,20 @@ class AdminView extends StatelessWidget {
                     ),
                   ),
                   _buildTextField(
+                    controller: usuarioController,
                     hintText: 'Nombre de usuario o correo',
                     icon: Icons.person_outline,
                   ),
                   const SizedBox(height: 20),
                   _buildTextField(
+                    controller: passwordController,
                     hintText: 'Contraseña',
                     icon: Icons.lock_outline,
                     obscureText: true,
                   ),
                   const SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/homeAdmin');
-                    },
+                    onPressed: () => loginUser(context),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 50, vertical: 15),
@@ -110,6 +155,7 @@ class AdminView extends StatelessWidget {
   }
 
   Widget _buildTextField({
+    required TextEditingController controller,
     required String hintText,
     required IconData icon,
     bool obscureText = false,
@@ -131,6 +177,7 @@ class AdminView extends StatelessWidget {
         ],
       ),
       child: TextField(
+        controller: controller,
         obscureText: obscureText,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(

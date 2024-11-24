@@ -9,10 +9,9 @@ class RegisterView extends StatelessWidget {
   final TextEditingController gmailController = TextEditingController();
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
 
-  Future<void> registerUser() async {
-    final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/register');
+  Future<void> registerUser(BuildContext context) async {
+    final url = Uri.parse('http://localhost:3002/api/v1/register');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -21,16 +20,22 @@ class RegisterView extends StatelessWidget {
         'apellido': apellidoController.text,
         'telefono': telefonoController.text,
         'gmail': gmailController.text,
-        'usuario': usuarioController.text,
-        'password': passwordController.text,
-        'confirmPassword': confirmPasswordController.text,
+        'codigo': passwordController.text,
+        'usuario': usuarioController.text
       }),
     );
 
-    if (response.statusCode == 200) {
-      print('Usuario registrado exitosamente');
+    if (response.statusCode == 201) {
+      // Redirige a la página homeAdmin
+      Navigator.pushReplacementNamed(context, '/homeAdmin');
     } else {
-      print('Error al registrar usuario');
+      // Muestra un mensaje de error si falla
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al registrar usuario: ${response.body}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -145,22 +150,15 @@ class RegisterView extends StatelessWidget {
                     icon: Icons.lock_outline,
                     obscureText: true,
                   ),
-                  const SizedBox(height: 20),
-                  _buildTextField(
-                    controller: confirmPasswordController,
-                    hint: 'Confirmar contraseña',
-                    icon: Icons.lock_outline,
-                    obscureText: true,
-                  ),
                   const SizedBox(height: 30),
                   Center(
                     child: ElevatedButton(
-                      onPressed: registerUser,
+                      onPressed: () => registerUser(context),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                         backgroundColor: Colors.black,
                         side: const BorderSide(
-                          color: Colors.cyanAccent, // Borde turquesa fluorescente
+                          color: Colors.cyanAccent,
                           width: 2,
                         ),
                         shape: RoundedRectangleBorder(
@@ -172,7 +170,7 @@ class RegisterView extends StatelessWidget {
                       child: const Text(
                         'Registrarse',
                         style: TextStyle(
-                          color: Colors.cyanAccent, // Texto turquesa fluorescente
+                          color: Colors.cyanAccent,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
