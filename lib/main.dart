@@ -3,7 +3,7 @@ import 'package:integrador/Pages/Register_User.dart';
 import 'package:integrador/Pages/home_admin.dart';
 import 'package:integrador/Pages/home_page.dart';
 import 'package:integrador/Pages/home_user.dart';
-import 'package:integrador/Pages/QRScanPage.dart';
+import 'Pages/QRScanPage.dart';
 import 'pages/user_view.dart';
 import 'pages/admin_view.dart';
 import 'Pages/Logoview.dart';
@@ -25,7 +25,12 @@ class MyApp extends StatelessWidget {
         '/register': (context) => RegisterView(),
         '/userDashboard': (context) => UserDashboardView(),
         '/homeAdmin': (context) => HomeAdminView(),
-        '/qrscan': (context) => QRScanPage(),
+        '/qrscan': (context) => QRScanPage(
+              onUpdateGuests: (Map<String, dynamic> guestData) {
+                // Lógica para procesar la actualización de invitados
+                print('Datos del invitado: $guestData');
+              },
+            ), // Agregar el parámetro requerido
         '/logoView': (context) => LogoView(), // Nueva ruta de la vista con el logo
       },
     );

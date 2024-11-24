@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'QRDetailsPage.dart'; // Importa la vista nueva
 import 'dart:convert';
+import 'QRDetailsPage.dart';
 
 class QRScanPage extends StatefulWidget {
-  const QRScanPage({Key? key}) : super(key: key);
+  final Function(Map<String, dynamic>) onUpdateGuests;
+
+  QRScanPage({Key? key, required this.onUpdateGuests}) : super(key: key);
 
   @override
   State<QRScanPage> createState() => _QRScanPageState();
@@ -17,19 +19,22 @@ class _QRScanPageState extends State<QRScanPage> {
   void _processQRContent(String content) {
     try {
       final jsonData = json.decode(content);
+
+      // Actualizar la lista de invitados
+      widget.onUpdateGuests(jsonData);
+
       if (!isNavigating) {
-        isNavigating = true; // Evitar múltiples navegaciones
+        isNavigating = true;
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => QRDetailsPage(jsonData: jsonData),
           ),
         ).then((_) {
-          isNavigating = false; // Permitir futuras navegaciones al regresar
+          isNavigating = false;
         });
       }
     } catch (e) {
-      // Manejo de error si el contenido no es JSON válido
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('El código QR no contiene datos válidos'),
@@ -57,7 +62,6 @@ class _QRScanPageState extends State<QRScanPage> {
               ),
             ),
           ),
-          // Contenido del escáner
           Column(
             children: [
               const SizedBox(height: 50),
@@ -75,23 +79,19 @@ class _QRScanPageState extends State<QRScanPage> {
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.all(24),
-                  padding: const EdgeInsets.all(8), // Espaciado interno para el borde
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: Colors.cyanAccent, // Borde fluorescente
-                      width: 4,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF2D2D2D),
+                        const Color(0xFF1A1A1A),
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.cyanAccent.withOpacity(0.5),
-                        blurRadius: 15,
-                        spreadRadius: 3,
-                      ),
-                    ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(24),
                     child: MobileScanner(
                       controller: cameraController,
                       onDetect: (capture) {
@@ -104,43 +104,6 @@ class _QRScanPageState extends State<QRScanPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // Botón de linterna
-                  IconButton(
-                    icon: ValueListenableBuilder(
-                      valueListenable: cameraController.torchState,
-                      builder: (context, state, child) {
-                        return Icon(
-                          state == TorchState.off ? Icons.flash_off : Icons.flash_on,
-                          color: state == TorchState.off ? Colors.white70 : Colors.amber,
-                          size: 28,
-                        );
-                      },
-                    ),
-                    onPressed: () => cameraController.toggleTorch(),
-                  ),
-                  // Botón de cambio de cámara
-                  IconButton(
-                    icon: ValueListenableBuilder(
-                      valueListenable: cameraController.cameraFacingState,
-                      builder: (context, state, child) {
-                        return Icon(
-                          state == CameraFacing.front
-                              ? Icons.camera_front
-                              : Icons.camera_rear,
-                          color: Colors.white70,
-                          size: 28,
-                        );
-                      },
-                    ),
-                    onPressed: () => cameraController.switchCamera(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ],
