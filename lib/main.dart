@@ -9,7 +9,9 @@ import 'pages/user_view.dart';
 import 'pages/admin_view.dart';
 import 'Pages/Logoview.dart';
 import 'Pages/MiQR.dart';
+import 'Pages/Grafica_screen.dart';
 import 'package:integrador/Pages/eventos_screen.dart';
+
 
 void main() => runApp(MyApp());
 
@@ -30,6 +32,7 @@ class MyApp extends StatelessWidget {
         '/miQR': (context) => MiQR(),
         '/homeAdmin': (context) => HomeAdminView(),
         '/eventos': (context) => EventosScreen(),
+        '/grafica': (context) => const GraficaScreen(), 
         '/qrscan': (context) => QRScanPage(
               onUpdateGuests: (Map<String, dynamic> guestData) {
                 print('Datos del invitado: $guestData');
