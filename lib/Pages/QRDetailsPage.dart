@@ -37,7 +37,7 @@ class QRDetailsPage extends StatelessWidget {
               ),
               image: DecorationImage(
                 fit: BoxFit.cover,
-                image: AssetImage('assets/subtle_pattern.png'),
+                image: AssetImage('assets/QR.png'),
                 opacity: 0.03,
               ),
             ),

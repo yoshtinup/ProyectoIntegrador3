@@ -14,11 +14,11 @@ class UserDashboardView extends StatefulWidget {
 }
 
 class _UserDashboardViewState extends State<UserDashboardView> {
-  final TextEditingController _tipoController = TextEditingController();
+  String? _tipoController = 'VIP'; 
   final TextEditingController _codigoController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _eventoController = TextEditingController();
-  final TextEditingController _lugarController = TextEditingController();
+  final TextEditingController _lugarController = TextEditingController(); // Valor inicial por defecto
   String qrData = "";
   bool _showQR = false;
   File? _selectedImage;
@@ -74,9 +74,52 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     }
   }
 
-  // Generar el QR y subirlo
+  // Enviar JSON al endpoint adicional
+  Future<void> _sendJsonToEndpoint(String qrUrl) async {
+    final jsonData = {
+      'tipo': _tipoController,
+      'codigo': _codigoController.text,
+      'telefonoTaxi': _phoneController.text,
+      'evento': _eventoController.text,
+      'lugar': _lugarController.text,
+      'url': qrUrl,
+    };
+
+    final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/boleto');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(jsonData),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Datos enviados exitosamente al endpoint adicional'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        throw Exception(
+            'Error al enviar los datos: ${response.statusCode}, ${response.body}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al enviar los datos: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Generar el QR, subirlo y enviar datos al endpoint adicional
   void _generateQRCode() async {
-    if (_tipoController.text.isEmpty ||
+    if (_tipoController == null ||
         _codigoController.text.isEmpty ||
         _phoneController.text.isEmpty ||
         _eventoController.text.isEmpty ||
@@ -104,7 +147,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     }
 
     final userData = {
-      'tipo': _tipoController.text,
+      'tipo': _tipoController,
       'codigo': _codigoController.text,
       'telefonoTaxi': _phoneController.text,
       'evento': _eventoController.text,
@@ -139,12 +182,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('QR generado y subido exitosamente: $qrUrl'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    // Enviar JSON al endpoint adicional
+    await _sendJsonToEndpoint(qrUrl);
 
     setState(() {
       _showQR = true;
@@ -166,91 +205,101 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.black,
-              Color(0xFF1A1A1A),
-            ],
-          ),
-          image: DecorationImage(
-            image: AssetImage('assets/subtle_pattern.png'),
-            fit: BoxFit.cover,
-            opacity: 0.03,
-          ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.black,
+            Color(0xFF1A1A1A),
+          ],
         ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo con borde fluorescente
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 30),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.cyanAccent,
-                        width: 4,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.cyanAccent.withOpacity(0.6),
-                          blurRadius: 15,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: Image.asset(
-                      'assets/Logo.png', // Ruta del logo
-                      height: 100, // Tamaño del logo
-                      fit: BoxFit.contain,
-                    ),
+      ),
+      child: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logotipo
+                Image.asset(
+                  'assets/Logo.png', // Cambia esto al nombre correcto de tu archivo
+                  height: 100, // Ajusta el tamaño según sea necesario
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  _showQR ? 'Tu Código QR' : 'Generador QR',
+                  style: const TextStyle(
+                    color: Colors.cyanAccent,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                  Text(
-                    _showQR ? 'Tu Código QR' : 'Generador QR',
-                    style: const TextStyle(
-                      color: Colors.cyanAccent,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          color: Colors.cyanAccent,
-                          offset: Offset(0, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _showQR ? _buildQrView() : _buildInputView(),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                _showQR ? _buildQrView() : _buildInputView(),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+Widget _buildDropdown({
+  required String label,
+  required List<String> items,
+  required String? value,
+  required void Function(String?) onChanged,
+}) {
+  return DropdownButtonFormField<String>(
+    value: value,
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.cyanAccent),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.cyanAccent),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.black.withOpacity(0.8),
+    ),
+    dropdownColor: Colors.black,
+    iconEnabledColor: Colors.cyanAccent,
+    items: items.map((String item) {
+      return DropdownMenuItem<String>(
+        value: item,
+        child: Text(
+          item,
+          style: const TextStyle(color: Colors.white),
+        ),
+      );
+    }).toList(),
+    onChanged: onChanged,
+  );
+}
 
   Widget _buildInputView() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _buildTextField(
-          controller: _tipoController,
+        _buildDropdown(
           label: 'Tipo',
-          icon: Icons.person_outline,
+          items: ['VIP', 'Normal', 'Estudiante'], // Opciones del dropdown
+          value: _tipoController,
+          onChanged: (String? newValue) {
+            setState(() {
+              _tipoController = newValue;
+            });
+          },
         ),
         const SizedBox(height: 16),
         _buildTextField(
@@ -321,8 +370,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       ],
     );
   }
-
-  Widget _buildQrView() {
+ Widget _buildQrView() {
     return Column(
       children: [
         Container(
@@ -366,6 +414,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       ],
     );
   }
+
 
   Widget _buildTextField({
     required TextEditingController controller,

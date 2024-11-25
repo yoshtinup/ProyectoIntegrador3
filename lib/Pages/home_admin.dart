@@ -46,7 +46,7 @@ class _HomeAdminViewState extends State<HomeAdminView> {
                 ],
               ),
               image: DecorationImage(
-                image: AssetImage('assets/subtle_pattern.png'),
+                image: AssetImage('assets/Logo.png'),
                 fit: BoxFit.cover,
                 opacity: 0.03,
               ),

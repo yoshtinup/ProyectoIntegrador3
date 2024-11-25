@@ -7,7 +7,7 @@ class AdminView extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
 
   Future<void> loginUser(BuildContext context) async {
-    final url = Uri.parse('http://localhost:3002/api/v1/loginNew');
+    final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/loginNew');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
