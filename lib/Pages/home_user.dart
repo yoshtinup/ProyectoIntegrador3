@@ -72,15 +72,21 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     }
   }
 
-  Future<void> _sendJsonToEndpoint(String qrUrl) async {
+  Future<void> _sendJsonToEndpoint(String imageUrl) async {
     final jsonData = {
       'tipo': _tipoController,
       'codigo': _codigoController.text,
       'telefonoTaxi': _phoneController.text,
       'evento': _eventoController.text,
       'lugar': _lugarController.text,
-      'url': qrUrl,
+      'url': imageUrl,
     };
+
+    // Imprimir los datos enviados
+    jsonData.forEach((key, value) {
+      print('$key: $value');
+    });
+
 
     final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/boleto');
 
@@ -175,7 +181,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return;
     }
 
-    await _sendJsonToEndpoint(qrUrl);
+    await _sendJsonToEndpoint(imageUrl);
 
     setState(() {
       _showQR = true;

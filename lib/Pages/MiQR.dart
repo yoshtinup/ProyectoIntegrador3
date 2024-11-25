@@ -14,13 +14,20 @@ class MiQR extends StatelessWidget {
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
+        print(response.body); // Imprimir el JSON completo en la consola
+
         final data = jsonDecode(response.body) as List<dynamic>; // Lista de elementos
-        // Filtrar por el id 12
+        // Filtrar por el id 6
         final filteredItem = data.firstWhere(
-          (item) => item['id'] == 12,
-          orElse: () => throw Exception('No se encontró el ID 12'),
+          (item) => item['id'] == 16,
+          orElse: () => throw Exception('No se encontró el ID 6'),
         );
-        return filteredItem; // Devuelve solo el objeto con id 12
+
+        // Renombrar la clave "url" a "ImagenURL"
+        filteredItem['ImagenURL'] = filteredItem['url']; // Agregar "ImagenURL" al objeto
+        filteredItem.remove('url'); // Eliminar la clave "url" si no se necesita
+
+        return filteredItem; // Devuelve el objeto con la clave renombrada
       } else {
         throw Exception('Error al obtener los datos de la API');
       }
@@ -101,12 +108,11 @@ class MiQR extends StatelessWidget {
                     } else {
                       // Convertir solo campos relevantes a cadena para el QR
                       final filteredData = {
-                        'id': snapshot.data!['id'] ?? '',
                         'tipo': snapshot.data!['tipo'] ?? '',
                         'evento': snapshot.data!['evento'] ?? '',
                         'lugar': snapshot.data!['lugar'] ?? '',
                         'telefonoTaxi': snapshot.data!['telefonoTaxi'] ?? '',
-                        'ImagenURL': snapshot.data!['url'] ?? '',
+                        'ImagenURL': snapshot.data!['ImagenURL'] ?? '',
                       };
 
                       final jsonString = jsonEncode(filteredData);
