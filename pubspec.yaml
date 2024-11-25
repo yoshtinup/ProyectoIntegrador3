@@ -24,6 +24,7 @@ dependencies:
   image: ^3.2.0
   mobile_scanner: ^3.5.5
   path_provider: ^2.0.9
+  local_auth: ^2.1.8
 
 dev_dependencies:
   flutter_test:
