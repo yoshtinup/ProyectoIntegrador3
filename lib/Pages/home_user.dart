@@ -197,87 +197,87 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.black,
-              Color(0xFF1A1A1A),
-            ],
-          ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.black,
+            Color(0xFF1A1A1A),
+          ],
         ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/logo.png',
-                    height: 100,
+      ),
+      child: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logotipo
+                Image.asset(
+                  'assets/Logo.png', // Cambia esto al nombre correcto de tu archivo
+                  height: 100, // Ajusta el tamaño según sea necesario
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  _showQR ? 'Tu Código QR' : 'Generador QR',
+                  style: const TextStyle(
+                    color: Colors.cyanAccent,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _showQR ? 'Tu Código QR' : 'Generador QR',
-                    style: const TextStyle(
-                      color: Colors.cyanAccent,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _showQR ? _buildQrView() : _buildInputView(),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                _showQR ? _buildQrView() : _buildInputView(),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDropdown({
-    required String label,
-    required List<String> items,
-    required String? value,
-    required void Function(String?) onChanged,
-  }) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.cyanAccent),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.cyanAccent),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.black.withOpacity(0.8),
+    ),
+  );
+}
+Widget _buildDropdown({
+  required String label,
+  required List<String> items,
+  required String? value,
+  required void Function(String?) onChanged,
+}) {
+  return DropdownButtonFormField<String>(
+    value: value,
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.cyanAccent),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.cyanAccent),
       ),
-      dropdownColor: Colors.black,
-      iconEnabledColor: Colors.cyanAccent,
-      items: items.map((String item) {
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(
-            item,
-            style: const TextStyle(color: Colors.white),
-          ),
-        );
-      }).toList(),
-      onChanged: onChanged,
-    );
-  }
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.black.withOpacity(0.8),
+    ),
+    dropdownColor: Colors.black,
+    iconEnabledColor: Colors.cyanAccent,
+    items: items.map((String item) {
+      return DropdownMenuItem<String>(
+        value: item,
+        child: Text(
+          item,
+          style: const TextStyle(color: Colors.white),
+        ),
+      );
+    }).toList(),
+    onChanged: onChanged,
+  );
+}
 
   Widget _buildInputView() {
     return Column(
