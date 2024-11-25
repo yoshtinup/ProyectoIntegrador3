@@ -362,7 +362,7 @@ Widget _buildDropdown({
               ),
             ],
           ),
-          child: QrImageView(
+          child: QrImage(
             data: qrData,
             size: 200,
             backgroundColor: Colors.white,
