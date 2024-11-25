@@ -14,18 +14,17 @@ class UserDashboardView extends StatefulWidget {
 }
 
 class _UserDashboardViewState extends State<UserDashboardView> {
-  String? _tipoController = 'VIP'; 
+  String? _tipoController = 'VIP';
   final TextEditingController _codigoController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _eventoController = TextEditingController();
-  final TextEditingController _lugarController = TextEditingController(); // Valor inicial por defecto
+  final TextEditingController _lugarController = TextEditingController();
   String qrData = "";
   bool _showQR = false;
   File? _selectedImage;
 
   final ImagePicker _picker = ImagePicker();
 
-  // Subir archivo al servidor (para imágenes y QR)
   Future<String?> _uploadFile(File file, String endpoint) async {
     final url = Uri.parse('http://44.214.23.160:3000/$endpoint');
     final request = http.MultipartRequest('POST', url);
@@ -49,7 +48,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     }
   }
 
-  // Guardar el QR como archivo de imagen temporal
   Future<File?> _saveQrAsImage() async {
     try {
       final tempDir = await getTemporaryDirectory();
@@ -74,7 +72,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     }
   }
 
-  // Enviar JSON al endpoint adicional
   Future<void> _sendJsonToEndpoint(String qrUrl) async {
     final jsonData = {
       'tipo': _tipoController,
@@ -104,8 +101,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           ),
         );
       } else {
-        throw Exception(
-            'Error al enviar los datos: ${response.statusCode}, ${response.body}');
+        throw Exception('Error al enviar los datos: ${response.statusCode}, ${response.body}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -117,7 +113,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     }
   }
 
-  // Generar el QR, subirlo y enviar datos al endpoint adicional
   void _generateQRCode() async {
     if (_tipoController == null ||
         _codigoController.text.isEmpty ||
@@ -127,8 +122,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
         _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-              'Por favor completa todos los campos y selecciona una imagen'),
+          content: Text('Por favor completa todos los campos y selecciona una imagen'),
           backgroundColor: Colors.black,
         ),
       );
@@ -163,8 +157,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     if (qrFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Error al generar el archivo del QR. Intenta nuevamente.'),
+          content: Text('Error al generar el archivo del QR. Intenta nuevamente.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -182,7 +175,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return;
     }
 
-    // Enviar JSON al endpoint adicional
     await _sendJsonToEndpoint(qrUrl);
 
     setState(() {
@@ -205,87 +197,87 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     });
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.black,
-            Color(0xFF1A1A1A),
-          ],
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.black,
+              Color(0xFF1A1A1A),
+            ],
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logotipo
-                Image.asset(
-                  'assets/Logo.png', // Cambia esto al nombre correcto de tu archivo
-                  height: 100, // Ajusta el tamaño según sea necesario
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  _showQR ? 'Tu Código QR' : 'Generador QR',
-                  style: const TextStyle(
-                    color: Colors.cyanAccent,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/logo.png',
+                    height: 100,
                   ),
-                ),
-                const SizedBox(height: 20),
-                _showQR ? _buildQrView() : _buildInputView(),
-              ],
+                  const SizedBox(height: 20),
+                  Text(
+                    _showQR ? 'Tu Código QR' : 'Generador QR',
+                    style: const TextStyle(
+                      color: Colors.cyanAccent,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _showQR ? _buildQrView() : _buildInputView(),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
-Widget _buildDropdown({
-  required String label,
-  required List<String> items,
-  required String? value,
-  required void Function(String?) onChanged,
-}) {
-  return DropdownButtonFormField<String>(
-    value: value,
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Colors.cyanAccent),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.cyanAccent),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
-      ),
-      filled: true,
-      fillColor: Colors.black.withOpacity(0.8),
-    ),
-    dropdownColor: Colors.black,
-    iconEnabledColor: Colors.cyanAccent,
-    items: items.map((String item) {
-      return DropdownMenuItem<String>(
-        value: item,
-        child: Text(
-          item,
-          style: const TextStyle(color: Colors.white),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required List<String> items,
+    required String? value,
+    required void Function(String?) onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.cyanAccent),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.cyanAccent),
         ),
-      );
-    }).toList(),
-    onChanged: onChanged,
-  );
-}
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.black.withOpacity(0.8),
+      ),
+      dropdownColor: Colors.black,
+      iconEnabledColor: Colors.cyanAccent,
+      items: items.map((String item) {
+        return DropdownMenuItem<String>(
+          value: item,
+          child: Text(
+            item,
+            style: const TextStyle(color: Colors.white),
+          ),
+        );
+      }).toList(),
+      onChanged: onChanged,
+    );
+  }
 
   Widget _buildInputView() {
     return Column(
@@ -293,7 +285,7 @@ Widget _buildDropdown({
       children: [
         _buildDropdown(
           label: 'Tipo',
-          items: ['VIP', 'Normal', 'Estudiante'], // Opciones del dropdown
+          items: ['VIP', 'Normal', 'Estudiante'],
           value: _tipoController,
           onChanged: (String? newValue) {
             setState(() {
@@ -304,7 +296,7 @@ Widget _buildDropdown({
         const SizedBox(height: 16),
         _buildTextField(
           controller: _codigoController,
-          label: 'Codigo',
+          label: 'Código',
           icon: Icons.code,
         ),
         const SizedBox(height: 16),
@@ -322,25 +314,16 @@ Widget _buildDropdown({
         const SizedBox(height: 16),
         _buildTextField(
           controller: _lugarController,
-          label: 'Direccion',
+          label: 'Dirección',
           icon: Icons.directions,
         ),
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: _pickImage,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black.withOpacity(0.8),
-            side: const BorderSide(color: Colors.cyanAccent, width: 2),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            shadowColor: Colors.cyanAccent.withOpacity(0.3),
-            elevation: 10,
-          ),
+          style: _buttonStyle(),
           child: const Text(
             'Seleccionar Imagen',
-            style: TextStyle(
-                color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 16),
@@ -352,25 +335,17 @@ Widget _buildDropdown({
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: _generateQRCode,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black.withOpacity(0.8),
-            side: const BorderSide(color: Colors.cyanAccent, width: 2),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            shadowColor: Colors.cyanAccent.withOpacity(0.3),
-            elevation: 10,
-          ),
+          style: _buttonStyle(),
           child: const Text(
             'Generar QR',
-            style: TextStyle(
-                color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
           ),
         ),
       ],
     );
   }
- Widget _buildQrView() {
+
+  Widget _buildQrView() {
     return Column(
       children: [
         Container(
@@ -396,25 +371,15 @@ Widget _buildDropdown({
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: _editData,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black.withOpacity(0.8),
-            side: const BorderSide(color: Colors.cyanAccent, width: 2),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            shadowColor: Colors.cyanAccent.withOpacity(0.3),
-            elevation: 10,
-          ),
+          style: _buttonStyle(),
           child: const Text(
             'Editar Información',
-            style: TextStyle(
-                color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
           ),
         ),
       ],
     );
   }
-
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -439,6 +404,18 @@ Widget _buildDropdown({
         filled: true,
         fillColor: Colors.black.withOpacity(0.8),
       ),
+    );
+  }
+
+  ButtonStyle _buttonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: Colors.black.withOpacity(0.8),
+      side: const BorderSide(color: Colors.cyanAccent, width: 2),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      shadowColor: Colors.cyanAccent.withOpacity(0.3),
+      elevation: 10,
     );
   }
 }

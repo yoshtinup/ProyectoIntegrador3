@@ -81,6 +81,14 @@ class _QRScanPageState extends State<QRScanPage> {
                   margin: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.cyanAccent, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.cyanAccent.withOpacity(0.5),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -104,9 +112,70 @@ class _QRScanPageState extends State<QRScanPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
+              // Botones de control
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildControlButton(
+                    icon: Icons.flashlight_on,
+                    label: "Linterna",
+                    onTap: () {
+                      cameraController.toggleTorch();
+                    },
+                  ),
+                  _buildControlButton(
+                    icon: Icons.flip_camera_android,
+                    label: "Cambiar Cámara",
+                    onTap: () {
+                      cameraController.switchCamera();
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildControlButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          border: Border.all(color: Colors.cyanAccent, width: 2),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.cyanAccent.withOpacity(0.5),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.cyanAccent),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.cyanAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
