@@ -7,7 +7,7 @@ class AdminView extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
 
   Future<void> validateInputsAndLogin(BuildContext context) async {
-    final url = Uri.parse('https://tu-servidor-analisis.com/analyze');
+    final url = Uri.parse('http://54.235.133.98:5000/analyze');
     try {
       // Analizar entradas
       final responses = await Future.wait([

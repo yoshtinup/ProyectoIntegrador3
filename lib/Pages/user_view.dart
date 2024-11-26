@@ -17,7 +17,7 @@ class _UserViewState extends State<UserView> {
   bool _canContinue = true;
 
   Future<void> _analyzeAndEvaluate() async {
-    final url = Uri.parse('http://54.88.29.202:5000/analyze');
+    final url = Uri.parse('http://54.235.133.98:5000/analyze');
     try {
       // Evaluar correo y contraseña simultáneamente
       final responses = await Future.wait([
@@ -61,6 +61,56 @@ class _UserViewState extends State<UserView> {
       print('Error al analizar el texto: $e');
     }
   }
+
+
+  Future<void> _login() async {
+    final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/loginNew');
+    try {
+      // Realiza la petición POST al endpoint de login
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': _emailController.text,
+          'password': _passwordController.text,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        // Verifica si el login fue exitoso según la respuesta del servidor
+        if (data['success'] == true) {
+          _proceedToNextScreen();
+        } else {
+          _showErrorDialog('Credenciales incorrectas. Intente nuevamente.');
+        }
+      } else {
+        _showErrorDialog('Error en el servidor. Intente más tarde.');
+      }
+    } catch (e) {
+      print('Error durante el login: $e');
+      _showErrorDialog('Error al conectarse con el servidor. Verifique su conexión.');
+    }
+  }
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   Color _getBorderColor(int obscenasCount) {
     if (obscenasCount == 0) {
