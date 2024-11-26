@@ -26,7 +26,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _validateInputs() async {
-    final url = Uri.parse('http://54.88.29.202:5000/analyze');
+    final url = Uri.parse('http://54.235.133.98:5000/analyze');
     try {
       final responses = await Future.wait([
         http.post(
