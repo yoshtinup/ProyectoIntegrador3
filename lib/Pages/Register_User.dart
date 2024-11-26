@@ -16,10 +16,18 @@ class _RegisterViewState extends State<RegisterView> {
   final TextEditingController gmailController = TextEditingController();
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  
+
   final LocalAuthentication auth = LocalAuthentication();
   bool canCheckBiometrics = false;
   bool isBiometricStep = false;
+
+  // Colores de los bordes dinámicos
+  Color _nombreBorderColor = Colors.cyanAccent;
+  Color _apellidoBorderColor = Colors.cyanAccent;
+  Color _telefonoBorderColor = Colors.cyanAccent;
+  Color _gmailBorderColor = Colors.cyanAccent;
+  Color _usuarioBorderColor = Colors.cyanAccent;
+  Color _passwordBorderColor = Colors.cyanAccent;
 
   @override
   void initState() {
@@ -34,7 +42,7 @@ class _RegisterViewState extends State<RegisterView> {
     } on PlatformException {
       canCheck = false;
     }
-    
+
     if (!mounted) return;
 
     setState(() {
@@ -42,31 +50,73 @@ class _RegisterViewState extends State<RegisterView> {
     });
   }
 
-  Future<void> authenticateWithBiometrics() async {
-    bool authenticated = false;
+  Future<void> analyzeInputs() async {
+    final url = Uri.parse('http://54.88.29.202:5000/analyze');
     try {
-      authenticated = await auth.authenticate(
-        localizedReason: 'Autentícate para completar el registro',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
-      );
-    } on PlatformException catch (e) {
-      print(e);
-      return;
-    }
+      // Analizar todos los campos relevantes
+      final responses = await Future.wait([
+        http.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'message': nombreController.text})),
+        http.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'message': apellidoController.text})),
+        http.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'message': telefonoController.text})),
+        http.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'message': gmailController.text})),
+        http.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'message': usuarioController.text})),
+        http.post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'message': passwordController.text})),
+      ]);
 
-    if (authenticated) {
-      registerUser();
-    } else {
+      // Actualizar colores de los bordes en función de las respuestas
+      setState(() {
+        _nombreBorderColor = _getBorderColorFromResponse(responses[0]);
+        _apellidoBorderColor = _getBorderColorFromResponse(responses[1]);
+        _telefonoBorderColor = _getBorderColorFromResponse(responses[2]);
+        _gmailBorderColor = _getBorderColorFromResponse(responses[3]);
+        _usuarioBorderColor = _getBorderColorFromResponse(responses[4]);
+        _passwordBorderColor = _getBorderColorFromResponse(responses[5]);
+      });
+
+      // Si algún campo tiene palabras inapropiadas (rojo), mostrar mensaje
+      bool hasObsceneWords = [
+        _nombreBorderColor,
+        _apellidoBorderColor,
+        _telefonoBorderColor,
+        _gmailBorderColor,
+        _usuarioBorderColor,
+        _passwordBorderColor,
+      ].any((color) => color == Colors.red);
+
+      if (hasObsceneWords) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Se detectaron palabras inapropiadas en algunos campos. Corrige los datos antes de continuar.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Continuar con el registro si no hay palabras inapropiadas
+      initiateBiometricStep();
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Autenticación fallida'),
+        SnackBar(
+          content: Text('Error al analizar entradas: $e'),
           backgroundColor: Colors.red,
         ),
       );
     }
+  }
+
+  Color _getBorderColorFromResponse(http.Response response) {
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      int obscenasCount = data['obscenas'];
+      if (obscenasCount == 0) return Colors.cyanAccent;
+      if (obscenasCount <= 2) return Colors.yellow; // Advertencia leve
+      if (obscenasCount <= 4) return Colors.orange; // Advertencia alta
+      return Colors.red; // Bloqueo
+    }
+    return Colors.cyanAccent;
   }
 
   Future<void> initiateRegistration() async {
@@ -91,16 +141,48 @@ class _RegisterViewState extends State<RegisterView> {
       return;
     }
 
+    // Analizar entradas antes de continuar
+    await analyzeInputs();
+  }
+
+  void initiateBiometricStep() {
     setState(() {
       isBiometricStep = true;
     });
 
     if (canCheckBiometrics) {
-      await authenticateWithBiometrics();
+      authenticateWithBiometrics();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Tu dispositivo no soporta autenticación biométrica'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> authenticateWithBiometrics() async {
+    bool authenticated = false;
+    try {
+      authenticated = await auth.authenticate(
+        localizedReason: 'Autentícate para completar el registro',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+    } on PlatformException catch (e) {
+      print(e);
+      return;
+    }
+
+    if (authenticated) {
+      registerUser();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Autenticación fallida'),
           backgroundColor: Colors.red,
         ),
       );
@@ -144,7 +226,6 @@ class _RegisterViewState extends State<RegisterView> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo degradado con textura
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -168,7 +249,6 @@ class _RegisterViewState extends State<RegisterView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Logo
                   Center(
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 30),
@@ -195,11 +275,75 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                     ),
                   ),
-                  if (!isBiometricStep) ...[
-                    _buildRegistrationForm(),
-                  ] else ...[
-                    _buildBiometricStep(),
-                  ],
+                  _buildTextField(
+                    controller: nombreController,
+                    hint: 'Nombre',
+                    icon: Icons.person_outline,
+                    borderColor: _nombreBorderColor,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: apellidoController,
+                    hint: 'Apellido',
+                    icon: Icons.person_outline,
+                    borderColor: _apellidoBorderColor,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: telefonoController,
+                    hint: 'Teléfono',
+                    icon: Icons.phone_outlined,
+                    borderColor: _telefonoBorderColor,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: gmailController,
+                    hint: 'Correo electrónico',
+                    icon: Icons.email_outlined,
+                    borderColor: _gmailBorderColor,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: usuarioController,
+                    hint: 'Usuario',
+                    icon: Icons.account_circle_outlined,
+                    borderColor: _usuarioBorderColor,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: passwordController,
+                    hint: 'Contraseña',
+                    icon: Icons.lock_outline,
+                    borderColor: _passwordBorderColor,
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 30),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: initiateRegistration,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                        backgroundColor: Colors.black,
+                        side: const BorderSide(
+                          color: Colors.cyanAccent,
+                          width: 2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        shadowColor: Colors.cyanAccent.withOpacity(0.3),
+                        elevation: 10,
+                      ),
+                      child: const Text(
+                        'Continuar',
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -209,210 +353,30 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
-  Widget _buildRegistrationForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Registro de Usuario',
-          style: TextStyle(
-            color: Colors.cyanAccent,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            shadows: [
-              Shadow(
-                color: Colors.cyanAccent,
-                offset: Offset(0, 2),
-                blurRadius: 4,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        _buildTextField(
-          controller: nombreController,
-          hint: 'Nombre',
-          icon: Icons.person_outline,
-        ),
-        const SizedBox(height: 20),
-        _buildTextField(
-          controller: apellidoController,
-          hint: 'Apellido',
-          icon: Icons.person_outline,
-        ),
-        const SizedBox(height: 20),
-        _buildTextField(
-          controller: telefonoController,
-          hint: 'Teléfono',
-          icon: Icons.phone_outlined,
-          keyboardType: TextInputType.phone,
-        ),
-        const SizedBox(height: 20),
-        _buildTextField(
-          controller: gmailController,
-          hint: 'Correo electrónico',
-          icon: Icons.email_outlined,
-          keyboardType: TextInputType.emailAddress,
-        ),
-        const SizedBox(height: 20),
-        _buildTextField(
-          controller: usuarioController,
-          hint: 'Usuario',
-          icon: Icons.account_circle_outlined,
-        ),
-        const SizedBox(height: 20),
-        _buildTextField(
-          controller: passwordController,
-          hint: 'Contraseña',
-          icon: Icons.lock_outline,
-          obscureText: true,
-        ),
-        const SizedBox(height: 30),
-        Center(
-          child: ElevatedButton(
-            onPressed: initiateRegistration,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-              backgroundColor: Colors.black,
-              side: const BorderSide(
-                color: Colors.cyanAccent,
-                width: 2,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              shadowColor: Colors.cyanAccent.withOpacity(0.3),
-              elevation: 10,
-            ),
-            child: const Text(
-              'Continuar',
-              style: TextStyle(
-                color: Colors.cyanAccent,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBiometricStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text(
-          'Verificación Biométrica',
-          style: TextStyle(
-            color: Colors.cyanAccent,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            shadows: [
-              Shadow(
-                color: Colors.cyanAccent,
-                offset: Offset(0, 2),
-                blurRadius: 4,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 30),
-        Icon(
-          Icons.fingerprint,
-          size: 100,
-          color: Colors.cyanAccent.withOpacity(0.8),
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          'Por favor, autentícate usando tu huella dactilar para completar el registro',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 30),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  isBiometricStep = false;
-                });
-              },
-              child: const Text(
-                'Volver',
-                style: TextStyle(color: Colors.cyanAccent),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: authenticateWithBiometrics,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                backgroundColor: Colors.black,
-                side: const BorderSide(
-                  color: Colors.cyanAccent,
-                  width: 2,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              child: const Text(
-                'Verificar',
-                style: TextStyle(
-                  color: Colors.cyanAccent,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
     required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
+    required Color borderColor,
     bool obscureText = false,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.cyanAccent,
+          color: borderColor,
           width: 2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.cyanAccent.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
       ),
       child: TextField(
         controller: controller,
-        keyboardType: keyboardType,
         obscureText: obscureText,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey[600]),
+          hintStyle: const TextStyle(color: Colors.grey),
           prefixIcon: Icon(icon, color: Colors.cyanAccent),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          filled: true,
-          fillColor: Colors.black.withOpacity(0.8),
+          border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),

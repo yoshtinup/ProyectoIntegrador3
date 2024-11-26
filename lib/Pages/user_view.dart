@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class UserView extends StatefulWidget {
   @override
@@ -9,7 +11,91 @@ class _UserViewState extends State<UserView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _isEmailPasswordEntered = false;
+  Color _emailBorderColor = Colors.cyanAccent;
+  Color _passwordBorderColor = Colors.cyanAccent;
+
+  bool _canContinue = true;
+
+  Future<void> _analyzeAndEvaluate() async {
+    final url = Uri.parse('http://54.88.29.202:5000/analyze');
+    try {
+      // Evaluar correo y contraseña simultáneamente
+      final responses = await Future.wait([
+        http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'message': _emailController.text}),
+        ),
+        http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'message': _passwordController.text}),
+        ),
+      ]);
+
+      // Evaluar respuestas
+      if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {
+        final emailResponse = jsonDecode(responses[0].body);
+        final passwordResponse = jsonDecode(responses[1].body);
+
+        int emailObscenas = emailResponse['obscenas'];
+        int passwordObscenas = passwordResponse['obscenas'];
+
+        setState(() {
+          _emailBorderColor = _getBorderColor(emailObscenas);
+          _passwordBorderColor = _getBorderColor(passwordObscenas);
+
+          // Bloquear si cualquiera de las frases tiene 3+ palabras inapropiadas
+          _canContinue = emailObscenas < 3 && passwordObscenas < 3;
+        });
+
+        if (!_canContinue) {
+          _showBlockedDialog();
+        } else {
+          _proceedToNextScreen();
+        }
+      } else {
+        print('Error en el servidor: ${responses[0].statusCode} / ${responses[1].statusCode}');
+      }
+    } catch (e) {
+      print('Error al analizar el texto: $e');
+    }
+  }
+
+  Color _getBorderColor(int obscenasCount) {
+    if (obscenasCount == 0) {
+      return Colors.cyanAccent; // Normal
+    } else if (obscenasCount == 1) {
+      return Colors.yellow; // Advertencia leve
+    } else if (obscenasCount == 2) {
+      return Colors.orange; // Advertencia alta
+    } else {
+      return Colors.red; // Bloqueado
+    }
+  }
+
+  void _showBlockedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Acceso Denegado'),
+          content: const Text(
+              'Se han detectado frases inapropiadas. Por favor, corrija los datos antes de continuar.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _proceedToNextScreen() {
+    Navigator.pushReplacementNamed(context, '/homeUsuario');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,105 +123,50 @@ class _UserViewState extends State<UserView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo con borde fluorescente
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 30),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.cyanAccent,
-                          width: 4,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.cyanAccent.withOpacity(0.6),
-                            blurRadius: 15,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: Image.asset(
-                        'assets/Logo.png', // Ruta del logo
-                        height: 100, // Tamaño del logo
-                        fit: BoxFit.contain,
-                      ),
-                    ),
                     const Text(
                       'Iniciar Sesión',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.cyanAccent,
-                        shadows: [
-                          Shadow(
-                            color: Colors.cyanAccent,
-                            offset: Offset(0, 2),
-                            blurRadius: 4,
-                          ),
-                        ],
                       ),
                     ),
                     const SizedBox(height: 40),
-                    if (!_isEmailPasswordEntered) ...[
-                      _buildTextField(
-                        controller: _emailController,
-                        hint: 'Correo electrónico',
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildTextField(
-                        controller: _passwordController,
-                        hint: 'Contraseña',
-                        icon: Icons.lock_outline,
-                        obscureText: true,
-                      ),
-                      const SizedBox(height: 30),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _isEmailPasswordEntered = true;
-                          });
-                          Navigator.pushReplacementNamed(
-                              context, '/homeUsuario');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 50, vertical: 15),
-                          backgroundColor: Colors.black.withOpacity(0.8),
-                          side: const BorderSide(
-                            color: Colors.cyanAccent,
-                            width: 2,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          shadowColor: Colors.cyanAccent.withOpacity(0.3),
-                          elevation: 10,
-                        ),
-                        child: const Text(
-                          'Iniciar sesión',
-                          style: TextStyle(
-                            color: Colors.cyanAccent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
+                    _buildTextField(
+                      controller: _emailController,
+                      hint: 'Correo electrónico',
+                      icon: Icons.email_outlined,
+                      borderColor: _emailBorderColor,
+                    ),
                     const SizedBox(height: 20),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/register');
-                      },
+                    _buildTextField(
+                      controller: _passwordController,
+                      hint: 'Contraseña',
+                      icon: Icons.lock_outline,
+                      obscureText: true,
+                      borderColor: _passwordBorderColor,
+                    ),
+                    const SizedBox(height: 30),
+                    ElevatedButton(
+                      onPressed: _analyzeAndEvaluate,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 50, vertical: 15),
+                        backgroundColor: Colors.black.withOpacity(0.8),
+                        side: const BorderSide(
+                          color: Colors.cyanAccent,
+                          width: 2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
                       child: const Text(
-                        '¿No tienes una cuenta? Regístrate aquí',
+                        'Iniciar sesión',
                         style: TextStyle(
                           color: Colors.cyanAccent,
-                          decoration: TextDecoration.underline,
-                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
                       ),
                     ),
@@ -153,24 +184,17 @@ class _UserViewState extends State<UserView> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+    required Color borderColor,
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.cyanAccent,
+          color: borderColor,
           width: 2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.cyanAccent.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
       ),
       child: TextField(
         controller: controller,
@@ -185,8 +209,6 @@ class _UserViewState extends State<UserView> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          filled: true,
-          fillColor: Colors.black.withOpacity(0.8),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,

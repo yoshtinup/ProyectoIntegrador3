@@ -6,6 +6,61 @@ class AdminView extends StatelessWidget {
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  Future<void> validateInputsAndLogin(BuildContext context) async {
+    final url = Uri.parse('https://tu-servidor-analisis.com/analyze');
+    try {
+      // Analizar entradas
+      final responses = await Future.wait([
+        http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'message': usuarioController.text}),
+        ),
+        http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'message': passwordController.text}),
+        ),
+      ]);
+
+      bool hasObsceneWords = false;
+      for (var response in responses) {
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          int obscenasCount = data['obscenas'];
+          if (obscenasCount >= 3) {
+            hasObsceneWords = true;
+            break;
+          }
+        } else {
+          throw Exception('Error en el análisis: ${response.statusCode}');
+        }
+      }
+
+      if (hasObsceneWords) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Se detectaron palabras inapropiadas. Corrige los datos antes de continuar.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Si no hay palabras inapropiadas, procede con el inicio de sesión
+      loginUser(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al analizar entradas: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> loginUser(BuildContext context) async {
     final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/loginNew');
     final response = await http.post(
@@ -110,7 +165,7 @@ class AdminView extends StatelessWidget {
                   ),
                   const SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: () => loginUser(context),
+                    onPressed: () => validateInputsAndLogin(context),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 50, vertical: 15),

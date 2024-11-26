@@ -25,6 +25,69 @@ class _UserDashboardViewState extends State<UserDashboardView> {
 
   final ImagePicker _picker = ImagePicker();
 
+  Future<void> _validateInputs() async {
+    final url = Uri.parse('http://54.88.29.202:5000/analyze');
+    try {
+      final responses = await Future.wait([
+        http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'message': _codigoController.text}),
+        ),
+        http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'message': _phoneController.text}),
+        ),
+        http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'message': _eventoController.text}),
+        ),
+        http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'message': _lugarController.text}),
+        ),
+      ]);
+
+      bool hasObsceneWords = false;
+      for (var response in responses) {
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          int obscenasCount = data['obscenas'];
+          if (obscenasCount >= 3) {
+            hasObsceneWords = true;
+            break;
+          }
+        } else {
+          throw Exception('Error en el análisis: ${response.statusCode}');
+        }
+      }
+
+      if (hasObsceneWords) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Se detectaron palabras inapropiadas. Corrige los datos antes de continuar.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      _generateQRCode(); // Continúa con la generación del QR
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al analizar entradas: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<String?> _uploadFile(File file, String endpoint) async {
     final url = Uri.parse('http://44.214.23.160:3000/$endpoint');
     final request = http.MultipartRequest('POST', url);
@@ -81,12 +144,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       'lugar': _lugarController.text,
       'url': imageUrl,
     };
-
-    // Imprimir los datos enviados
-    jsonData.forEach((key, value) {
-      print('$key: $value');
-    });
-
 
     final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/boleto');
 
@@ -203,87 +260,87 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     });
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.black,
-            Color(0xFF1A1A1A),
-          ],
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.black,
+              Color(0xFF1A1A1A),
+            ],
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logotipo
-                Image.asset(
-                  'assets/Logo.png', // Cambia esto al nombre correcto de tu archivo
-                  height: 100, // Ajusta el tamaño según sea necesario
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  _showQR ? 'Tu Código QR' : 'Generador QR',
-                  style: const TextStyle(
-                    color: Colors.cyanAccent,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/Logo.png',
+                    height: 100,
                   ),
-                ),
-                const SizedBox(height: 20),
-                _showQR ? _buildQrView() : _buildInputView(),
-              ],
+                  const SizedBox(height: 20),
+                  Text(
+                    _showQR ? 'Tu Código QR' : 'Generador QR',
+                    style: const TextStyle(
+                      color: Colors.cyanAccent,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _showQR ? _buildQrView() : _buildInputView(),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
-Widget _buildDropdown({
-  required String label,
-  required List<String> items,
-  required String? value,
-  required void Function(String?) onChanged,
-}) {
-  return DropdownButtonFormField<String>(
-    value: value,
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Colors.cyanAccent),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.cyanAccent),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
-      ),
-      filled: true,
-      fillColor: Colors.black.withOpacity(0.8),
-    ),
-    dropdownColor: Colors.black,
-    iconEnabledColor: Colors.cyanAccent,
-    items: items.map((String item) {
-      return DropdownMenuItem<String>(
-        value: item,
-        child: Text(
-          item,
-          style: const TextStyle(color: Colors.white),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required List<String> items,
+    required String? value,
+    required void Function(String?) onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.cyanAccent),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.cyanAccent),
         ),
-      );
-    }).toList(),
-    onChanged: onChanged,
-  );
-}
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.black.withOpacity(0.8),
+      ),
+      dropdownColor: Colors.black,
+      iconEnabledColor: Colors.cyanAccent,
+      items: items.map((String item) {
+        return DropdownMenuItem<String>(
+          value: item,
+          child: Text(
+            item,
+            style: const TextStyle(color: Colors.white),
+          ),
+        );
+      }).toList(),
+      onChanged: onChanged,
+    );
+  }
 
   Widget _buildInputView() {
     return Column(
@@ -340,7 +397,7 @@ Widget _buildDropdown({
           ),
         const SizedBox(height: 16),
         ElevatedButton(
-          onPressed: _generateQRCode,
+          onPressed: _validateInputs,
           style: _buttonStyle(),
           child: const Text(
             'Generar QR',
