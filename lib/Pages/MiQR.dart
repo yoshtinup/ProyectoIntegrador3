@@ -6,6 +6,7 @@ import 'package:qr_flutter/qr_flutter.dart'; // Mejor opción para generar QR en
 class MiQR extends StatelessWidget {
   const MiQR({Key? key}) : super(key: key);
 
+
   // Función para obtener los datos del QR desde la API
   Future<Map<String, dynamic>> fetchQRData() async {
     const apiUrl = 'https://apipulserelastik.integrador.xyz/api/v1/boletos';
@@ -33,6 +34,24 @@ class MiQR extends StatelessWidget {
       }
     } catch (e) {
       throw Exception('Error al conectar con la API: $e');
+    }
+  }
+  Future<String> fetchCodigo() async {
+    final url = Uri.parse('http://localhost:3002/api/v1/verific');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      List<dynamic> jsonResponse = json.decode(response.body);
+
+      // Extraer el primer código
+      if (jsonResponse.isNotEmpty) {
+        String codigo = jsonResponse[0]['codigo'];
+        return codigo;
+      } else {
+        throw Exception('No se encontraron datos en la respuesta');
+      }
+    } else {
+      throw Exception('Error al conectar con la API');
     }
   }
 

@@ -58,35 +58,54 @@ class _UserViewState extends State<UserView> {
     }
   }
 
-  Future<void> _login() async {
-    final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/loginNew');
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        }),
-      );
+Future<void> _login() async {
+  final urlLogin = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/loginNew');
+  final urlVerific = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/verific');
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        
-        if (data['success'] == true) {
-          _proceedToNextScreen();
+  try {
+    // Solicitud de login
+    final response = await http.post(
+      urlLogin,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': _emailController.text,
+        'password': _passwordController.text,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        // Extrae el código del login
+        final String codigo = data['codigo'] ?? '';
+
+        // Enviar el código al endpoint verific
+        final verificResponse = await http.post(
+          urlVerific,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'codigo': codigo}),
+        );
+
+        if (verificResponse.statusCode == 201) {
+          print('Código enviado al endpoint verific con éxito.');
         } else {
-          _showErrorDialog('Credenciales incorrectas. Intente nuevamente.');
+          print('Error al enviar el código al endpoint verific: ${verificResponse.statusCode}');
         }
-      } else {
-        _showErrorDialog('Error en el servidor. Intente más tarde.');
-      }
-    } catch (e) {
-      print('Error durante el login: $e');
-      _showErrorDialog('Error al conectarse con el servidor. Verifique su conexión.');
-    }
-  }
 
+        // Procede a la siguiente pantalla
+        _proceedToNextScreen();
+      } else {
+        _showErrorDialog('Credenciales incorrectas. Intente nuevamente.');
+      }
+    } else {
+      _showErrorDialog('Error en el servidor. Intente más tarde.');
+    }
+  } catch (e) {
+    print('Error durante el login: $e');
+    _showErrorDialog('Error al conectarse con el servidor. Verifique su conexión.');
+  }
+}
   void _showErrorDialog(String message) {
     showDialog(
       context: context,

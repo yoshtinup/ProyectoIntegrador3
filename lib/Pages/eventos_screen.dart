@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(MyApp());
@@ -37,6 +38,7 @@ class EventosScreen extends StatelessWidget {
                 fecha: '15/DIC/2024',
                 artista: 'Wos',
                 imagenPath: 'assets/Wos.jpg',
+                url: 'https://www.ticketmaster.com.mx/wos-boletos/artist/2826671',
               ),
               SizedBox(height: 20),
               EventoCard(
@@ -44,6 +46,7 @@ class EventosScreen extends StatelessWidget {
                 fecha: '15/DIC/2024',
                 artista: 'Paulo Londra',
                 imagenPath: 'assets/Paulo.jpg',
+                url: 'https://www.ticketmaster.com.mx/paulo-londra-boletos/artist/2640843',
               ),
               SizedBox(height: 20),
               EventoCard(
@@ -51,6 +54,7 @@ class EventosScreen extends StatelessWidget {
                 fecha: '15/SEP/2025',
                 artista: 'Duki',
                 imagenPath: 'assets/Duki.jpg',
+                url: 'https://www.ticketmaster.com.mx/duki-boletos/artist/2627891',
               ),
             ],
           ),
@@ -65,12 +69,14 @@ class EventoCard extends StatefulWidget {
   final String fecha;
   final String artista;
   final String imagenPath;
+  final String url;
 
   const EventoCard({
     required this.lugar,
     required this.fecha,
     required this.artista,
     required this.imagenPath,
+    required this.url,
   });
 
   @override
@@ -102,11 +108,16 @@ class _EventoCardState extends State<EventoCard> with SingleTickerProviderStateM
   void _onAsistirPressed() async {
     await _controller.forward();
     await _controller.reverse();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('¡Asistencia confirmada para ${widget.artista}!'),
-      ),
-    );
+
+    if (await canLaunchUrl(Uri.parse(widget.url))) {
+      await launchUrl(Uri.parse(widget.url));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo abrir el enlace para ${widget.artista}.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -170,3 +181,4 @@ class _EventoCardState extends State<EventoCard> with SingleTickerProviderStateM
     );
   }
 }
+

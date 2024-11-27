@@ -15,10 +15,10 @@ class UserDashboardView extends StatefulWidget {
 
 class _UserDashboardViewState extends State<UserDashboardView> {
   String? _tipoController = 'VIP';
-  final TextEditingController _codigoController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _eventoController = TextEditingController();
   final TextEditingController _lugarController = TextEditingController();
+  final String codigo = "";
   String qrData = "";
   bool _showQR = false;
   File? _selectedImage;
@@ -29,11 +29,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     final url = Uri.parse('http://54.235.133.98:5000/analyze');
     try {
       final responses = await Future.wait([
-        http.post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'message': _codigoController.text}),
-        ),
+
         http.post(
           url,
           headers: {'Content-Type': 'application/json'},
@@ -135,17 +131,58 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     }
   }
 
+// Función que retorna el último 'id'
+  Future<String?> fetchLastId() async {
+    // URL del endpoint
+    final url =
+        Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/verific');
+
+    try {
+      // Realizar la solicitud GET
+      final response = await http.get(url);
+
+      // Verificar si la solicitud fue exitosa
+      if (response.statusCode == 200) {
+        // Decodificar el cuerpo de la respuesta JSON
+        final data = json.decode(response.body);
+
+        // Asegurarse de que 'data' sea una lista
+        if (data is List) {
+          // Obtener el último elemento de la lista
+          final lastItem = data.isNotEmpty ? data.last : null;
+
+          // Extraer el 'id' del último elemento
+          final codigo =
+              lastItem != null ? lastItem['codigo'] as String? : null;
+
+          return codigo;
+        } else {
+          print('La respuesta no es una lista.');
+          return null;
+        }
+      } else {
+        print('Error en la solicitud: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Ocurrió un error: $e');
+      return null;
+    }
+  }
+//funxcion para extraer el ultimo codigo 
   Future<void> _sendJsonToEndpoint(String imageUrl) async {
+    final codigo = await fetchLastId();
     final jsonData = {
       'tipo': _tipoController,
-      'codigo': _codigoController.text,
+      'codigo':codigo,
       'telefonoTaxi': _phoneController.text,
       'evento': _eventoController.text,
       'lugar': _lugarController.text,
       'url': imageUrl,
     };
 
-    final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/boleto');
+    final url =
+        Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/boleto');
 
     try {
       final response = await http.post(
@@ -164,7 +201,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           ),
         );
       } else {
-        throw Exception('Error al enviar los datos: ${response.statusCode}, ${response.body}');
+        throw Exception(
+            'Error al enviar los datos: ${response.statusCode}, ${response.body}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -177,15 +215,17 @@ class _UserDashboardViewState extends State<UserDashboardView> {
   }
 
   void _generateQRCode() async {
+    final codigo = await fetchLastId();
     if (_tipoController == null ||
-        _codigoController.text.isEmpty ||
+         codigo == null||
         _phoneController.text.isEmpty ||
         _eventoController.text.isEmpty ||
         _lugarController.text.isEmpty ||
         _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor completa todos los campos y selecciona una imagen'),
+          content: Text(
+              'Por favor completa todos los campos y selecciona una imagen'),
           backgroundColor: Colors.black,
         ),
       );
@@ -205,7 +245,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
 
     final userData = {
       'tipo': _tipoController,
-      'codigo': _codigoController.text,
+      'codigo': codigo,
       'telefonoTaxi': _phoneController.text,
       'evento': _eventoController.text,
       'lugar': _lugarController.text,
@@ -220,7 +260,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     if (qrFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Error al generar el archivo del QR. Intenta nuevamente.'),
+          content:
+              Text('Error al generar el archivo del QR. Intenta nuevamente.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -358,12 +399,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
-          controller: _codigoController,
-          label: 'Código',
-          icon: Icons.code,
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
           controller: _phoneController,
           label: 'Teléfono',
           icon: Icons.phone_outlined,
@@ -386,7 +421,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           style: _buttonStyle(),
           child: const Text(
             'Seleccionar Imagen',
-            style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.cyanAccent, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 16),
@@ -401,7 +437,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           style: _buttonStyle(),
           child: const Text(
             'Generar QR',
-            style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.cyanAccent, fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -437,7 +474,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           style: _buttonStyle(),
           child: const Text(
             'Editar Información',
-            style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.cyanAccent, fontWeight: FontWeight.bold),
           ),
         ),
       ],

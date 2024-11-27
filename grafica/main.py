@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from statsmodels.tsa.holtwinters import ExponentialSmoothing # type: ignore
 import matplotlib.pyplot as plt
 import json
 
@@ -89,7 +89,7 @@ data_json = {
 }
 
 # Guardar en un archivo JSON
-with open('prediccion_ventas_diarias.json', 'w') as file:
+with open('../assets/prediccion_ventas_diarias.json', 'w') as file:
     json.dump(data_json, file)
 
 print("Datos exportados a prediccion_ventas_diarias.json")
