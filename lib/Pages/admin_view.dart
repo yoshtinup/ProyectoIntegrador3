@@ -2,14 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class AdminView extends StatelessWidget {
+class AdminView extends StatefulWidget {
+  @override
+  _AdminViewState createState() => _AdminViewState();
+}
+
+class _AdminViewState extends State<AdminView> {
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  Future<void> validateInputsAndLogin(BuildContext context) async {
+  // Colores de los bordes
+  Color _usuarioBorderColor = Colors.cyanAccent;
+  Color _passwordBorderColor = Colors.cyanAccent;
+
+  Future<void> analyzeInputs() async {
     final url = Uri.parse('http://54.235.133.98:5000/analyze');
     try {
-      // Analizar entradas
+      // Analizar las entradas
       final responses = await Future.wait([
         http.post(
           url,
@@ -23,19 +32,17 @@ class AdminView extends StatelessWidget {
         ),
       ]);
 
-      bool hasObsceneWords = false;
-      for (var response in responses) {
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          int obscenasCount = data['obscenas'];
-          if (obscenasCount >= 3) {
-            hasObsceneWords = true;
-            break;
-          }
-        } else {
-          throw Exception('Error en el análisis: ${response.statusCode}');
-        }
-      }
+      // Actualizar colores de los bordes según las respuestas
+      setState(() {
+        _usuarioBorderColor = _getBorderColorFromResponse(responses[0]);
+        _passwordBorderColor = _getBorderColorFromResponse(responses[1]);
+      });
+
+      // Si hay palabras inapropiadas en alguno de los campos
+      bool hasObsceneWords = [
+        _usuarioBorderColor,
+        _passwordBorderColor,
+      ].any((color) => color == Colors.red);
 
       if (hasObsceneWords) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -49,8 +56,8 @@ class AdminView extends StatelessWidget {
         return;
       }
 
-      // Si no hay palabras inapropiadas, procede con el inicio de sesión
-      loginUser(context);
+      // Si no hay palabras inapropiadas, proceder con el login
+      loginUser();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -61,7 +68,19 @@ class AdminView extends StatelessWidget {
     }
   }
 
-  Future<void> loginUser(BuildContext context) async {
+  Color _getBorderColorFromResponse(http.Response response) {
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      int obscenasCount = data['obscenas'];
+      if (obscenasCount == 0) return Colors.cyanAccent;
+      if (obscenasCount <= 2) return Colors.yellow; // Advertencia leve
+      if (obscenasCount <= 4) return Colors.orange; // Advertencia alta
+      return Colors.red; // Bloqueo
+    }
+    return Colors.cyanAccent;
+  }
+
+  Future<void> loginUser() async {
     final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/loginNew');
     final response = await http.post(
       url,
@@ -155,6 +174,7 @@ class AdminView extends StatelessWidget {
                     controller: usuarioController,
                     hintText: 'Nombre de usuario o correo',
                     icon: Icons.person_outline,
+                    borderColor: _usuarioBorderColor,
                   ),
                   const SizedBox(height: 20),
                   _buildTextField(
@@ -162,10 +182,11 @@ class AdminView extends StatelessWidget {
                     hintText: 'Contraseña',
                     icon: Icons.lock_outline,
                     obscureText: true,
+                    borderColor: _passwordBorderColor,
                   ),
                   const SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: () => validateInputsAndLogin(context),
+                    onPressed: analyzeInputs,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 50, vertical: 15),
@@ -213,6 +234,7 @@ class AdminView extends StatelessWidget {
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
+    required Color borderColor,
     bool obscureText = false,
   }) {
     return Container(
@@ -220,7 +242,7 @@ class AdminView extends StatelessWidget {
         color: Colors.black.withOpacity(0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.cyanAccent,
+          color: borderColor,
           width: 2,
         ),
         boxShadow: [

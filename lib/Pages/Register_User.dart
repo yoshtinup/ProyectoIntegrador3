@@ -271,7 +271,7 @@ class _RegisterViewState extends State<RegisterView> {
                       child: Image.asset(
                         'assets/Logo.png',
                         height: 100,
-                        fit: BoxFit.contain,
+                        
                       ),
                     ),
                   ),

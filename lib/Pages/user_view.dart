@@ -19,7 +19,6 @@ class _UserViewState extends State<UserView> {
   Future<void> _analyzeAndEvaluate() async {
     final url = Uri.parse('http://54.235.133.98:5000/analyze');
     try {
-      // Evaluar correo y contraseña simultáneamente
       final responses = await Future.wait([
         http.post(
           url,
@@ -33,7 +32,6 @@ class _UserViewState extends State<UserView> {
         ),
       ]);
 
-      // Evaluar respuestas
       if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {
         final emailResponse = jsonDecode(responses[0].body);
         final passwordResponse = jsonDecode(responses[1].body);
@@ -44,8 +42,6 @@ class _UserViewState extends State<UserView> {
         setState(() {
           _emailBorderColor = _getBorderColor(emailObscenas);
           _passwordBorderColor = _getBorderColor(passwordObscenas);
-
-          // Bloquear si cualquiera de las frases tiene 3+ palabras inapropiadas
           _canContinue = emailObscenas < 3 && passwordObscenas < 3;
         });
 
@@ -62,11 +58,9 @@ class _UserViewState extends State<UserView> {
     }
   }
 
-
   Future<void> _login() async {
     final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/loginNew');
     try {
-      // Realiza la petición POST al endpoint de login
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -79,7 +73,6 @@ class _UserViewState extends State<UserView> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
-        // Verifica si el login fue exitoso según la respuesta del servidor
         if (data['success'] == true) {
           _proceedToNextScreen();
         } else {
@@ -93,6 +86,7 @@ class _UserViewState extends State<UserView> {
       _showErrorDialog('Error al conectarse con el servidor. Verifique su conexión.');
     }
   }
+
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -110,7 +104,6 @@ class _UserViewState extends State<UserView> {
       },
     );
   }
-
 
   Color _getBorderColor(int obscenasCount) {
     if (obscenasCount == 0) {
@@ -173,6 +166,30 @@ class _UserViewState extends State<UserView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Logo con borde fosforescente y sombra
+                    Container(
+                      padding: const EdgeInsets.all(5), // Espacio para el borde
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: Colors.cyanAccent, // Color del borde fosforescente
+                          width: 3, // Ancho del borde
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.cyanAccent.withOpacity(0.6),
+                            spreadRadius: 5,
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/Logo.png',  // Asegúrate de tener la ruta correcta del logo
+                        height: 100,  // Puedes ajustar el tamaño del logo
+                        width: 100,   // Ajusta según sea necesario
+                      ),
+                    ),
+                    const SizedBox(height: 20),  // Espaciado después del logo
                     const Text(
                       'Iniciar Sesión',
                       style: TextStyle(
@@ -187,6 +204,7 @@ class _UserViewState extends State<UserView> {
                       hint: 'Correo electrónico',
                       icon: Icons.email_outlined,
                       borderColor: _emailBorderColor,
+                      hasShadow: false,  // Sin sombra en los campos
                     ),
                     const SizedBox(height: 20),
                     _buildTextField(
@@ -195,21 +213,20 @@ class _UserViewState extends State<UserView> {
                       icon: Icons.lock_outline,
                       obscureText: true,
                       borderColor: _passwordBorderColor,
+                      hasShadow: false,  // Sin sombra en los campos
                     ),
                     const SizedBox(height: 30),
                     ElevatedButton(
                       onPressed: _analyzeAndEvaluate,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 50, vertical: 15),
+                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                         backgroundColor: Colors.black.withOpacity(0.8),
-                        side: const BorderSide(
-                          color: Colors.cyanAccent,
-                          width: 2,
-                        ),
+                        side: const BorderSide(color: Colors.cyanAccent, width: 2),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
+                        shadowColor: Colors.cyanAccent.withOpacity(0.6),
+                        elevation: 10,
                       ),
                       child: const Text(
                         'Iniciar sesión',
@@ -217,6 +234,20 @@ class _UserViewState extends State<UserView> {
                           color: Colors.cyanAccent,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/register');
+                      },
+                      child: const Text(
+                        '¿No tienes una cuenta? Regístrate aquí',
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 14,
+                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
@@ -237,14 +268,24 @@ class _UserViewState extends State<UserView> {
     required Color borderColor,
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
+    bool hasShadow = true,  // Parámetro para agregar sombra
   }) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: borderColor,
+          color: borderColor,  // Borde fosforescente
           width: 2,
         ),
+        boxShadow: hasShadow
+            ? [
+                BoxShadow(
+                  color: borderColor.withOpacity(0.5),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                ),
+              ]
+            : [],  // Sin sombra si 'hasShadow' es falso
       ),
       child: TextField(
         controller: controller,
