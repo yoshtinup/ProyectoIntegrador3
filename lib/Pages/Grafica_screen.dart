@@ -13,39 +13,78 @@ class GraficaScreen extends StatefulWidget {
 class _GraficaScreenState extends State<GraficaScreen> {
   List<FlSpot> historicalData = [];
   List<FlSpot> forecastData = [];
+  double animationProgress = 0.0;
+  bool isLoading = true;
+  bool hasError = false;
 
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     loadJsonData();
   }
 
-  Future<void> loadJsonData() async {
-    final String response =
-        await rootBundle.loadString('assets/prediccion_ventas_diarias.json');
-    final data = json.decode(response);
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.dispose();
+  }
 
-    setState(() {
-      historicalData = List<FlSpot>.from(
-        data['historical']['dates'].asMap().entries.map(
-          (entry) => FlSpot(
-            entry.key.toDouble(),
-            data['historical']['values'][entry.key],
+  Future<void> loadJsonData() async {
+    try {
+      final String response =
+          await rootBundle.loadString('assets/prediccion_ventas_diarias.json');
+      final data = json.decode(response);
+
+      setState(() {
+        historicalData = List<FlSpot>.from(
+          data['historical']['dates'].asMap().entries.map(
+            (entry) => FlSpot(
+              entry.key.toDouble(),
+              data['historical']['values'][entry.key],
+            ),
           ),
-        ),
-      );
-      forecastData = List<FlSpot>.from(
-        data['forecast']['dates'].asMap().entries.map((entry) {
-          final value = data['forecast']['values'][entry.key];
-          if (value != 0.0) {
-            return FlSpot(
-              (entry.key + data['historical']['dates'].length).toDouble(),
-              value,
-            );
-          }
-          return null; // Devuelve null para valores 0.0
-        }).where((spot) => spot != null), // Filtra los valores null
-      );
+        );
+        forecastData = List<FlSpot>.from(
+          data['forecast']['dates'].asMap().entries.map((entry) {
+            final value = data['forecast']['values'][entry.key];
+            return value != null && value != 0.0
+                ? FlSpot(
+                    (entry.key + data['historical']['dates'].length).toDouble(),
+                    value,
+                  )
+                : null;
+          }).whereType<FlSpot>(),
+        );
+
+        isLoading = false;
+        hasError = false;
+        animationProgress = 0.0; // La animación comienza en 0
+      });
+
+      // Iniciar animación
+      animateForecast();
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        hasError = true;
+        historicalData = [FlSpot(0, 0)];
+        forecastData = [FlSpot(1, 0)];
+      });
+    }
+  }
+
+  void animateForecast() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        animationProgress = 15.0; // Animación completa
+      });
     });
   }
 
@@ -53,21 +92,25 @@ class _GraficaScreenState extends State<GraficaScreen> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
-    var sideTitles = SideTitles(
+    var bottomTitles = SideTitles(
       showTitles: true,
       interval: 10,
       getTitles: (value) {
-        return value.toInt().toString();
+        if (value % 10 == 0) return '${value ~/ 10} Meses';
+        return '';
       },
+      reservedSize: 22,
+      margin: 10,
     );
 
-    var sideTitles2 = SideTitles(
+    var leftTitles = SideTitles(
       showTitles: true,
       interval: 10,
-      getTitles: (value) {
-        return value.toInt().toString();
-      },
+      getTitles: (value) => value.toInt().toString(),
+      reservedSize: 28,
+      margin: 8,
     );
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -83,74 +126,100 @@ class _GraficaScreenState extends State<GraficaScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Gráfica de Ventas',
-                style: TextStyle(
-                  color: Colors.cyanAccent,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Gráfica de Ventas',
+                  style: TextStyle(
+                    color: Colors.cyanAccent,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: screenHeight * 0.03),
-              Expanded(
-                child: historicalData.isEmpty || forecastData.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: LineChart(
-                          LineChartData(
-                            lineBarsData: [
-                              LineChartBarData(
-                                spots: historicalData,
-                                isCurved: true,
-                                colors: [Colors.blue],
-                                barWidth: 4,
-                                isStrokeCapRound: true,
-                                belowBarData: BarAreaData(show: false),
-                              ),
-                              LineChartBarData(
-                                spots: forecastData,
-                                isCurved: true,
-                                colors: [Colors.green],
-                                barWidth: 4,
-                                isStrokeCapRound: true,
-                                belowBarData: BarAreaData(show: false),
-                              ),
-                            ],
-                            titlesData: FlTitlesData(
-                              bottomTitles: AxisTitles(
-                                sideTitles: sideTitles,
-                              ),
-                              leftTitles: AxisTitles(
-                                sideTitles: sideTitles2,
-                              ),
-                              topTitles: AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              rightTitles: AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                            ),
-                            borderData: FlBorderData(
-                              show: true,
-                              border: Border.all(color: Colors.grey, width: 1),
-                            ),
-                            gridData: FlGridData(show: true),
-                          ),
+                SizedBox(height: screenHeight * 0.03),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: Colors.cyanAccent, width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.cyanAccent.withOpacity(0.8), // Color de iluminación
+                          blurRadius: 20, // Difuminado
+                          spreadRadius: 5, // Extensión del brillo
+                          offset: const Offset(0, 0), // Centrado
                         ),
-                      ),
-              ),
-              SizedBox(height: screenHeight * 0.03),
-            ],
+                      ],
+                    ),
+                    child: isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.cyanAccent,
+                            ),
+                          )
+                        : TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: animationProgress),
+                            duration: const Duration(seconds: 100), // Animación más rápida (10 segundos)
+                            builder: (context, value, child) {
+                              return LineChart(
+                                LineChartData(
+                                  lineBarsData: [
+                                    LineChartBarData(
+                                      spots: historicalData,
+                                      isCurved: true,
+                                      colors: [Colors.blue],
+                                      barWidth: 4,
+                                      isStrokeCapRound: true,
+                                      belowBarData: BarAreaData(show: false),
+                                    ),
+                                    LineChartBarData(
+                                      spots: forecastData
+                                          .sublist(
+                                            0,
+                                            ((forecastData.length * value).toInt()).clamp(0, forecastData.length), // Limitar el índice
+                                          ),
+                                      isCurved: true,
+                                      colors: [Colors.green],
+                                      barWidth: 4,
+                                      isStrokeCapRound: true,
+                                      belowBarData: BarAreaData(show: false),
+                                    ),
+                                  ],
+                                  titlesData: FlTitlesData(
+                                    bottomTitles: bottomTitles,
+                                    leftTitles: leftTitles,
+                                    rightTitles: SideTitles(showTitles: false),
+                                    topTitles: SideTitles(showTitles: false),
+                                  ),
+                                  borderData: FlBorderData(
+                                    show: true,
+                                    border: Border.all(color: Colors.grey, width: 1),
+                                  ),
+                                  gridData: FlGridData(show: true),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.03),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-  
-  AxisTitles({required SideTitles sideTitles}) {}
 }
