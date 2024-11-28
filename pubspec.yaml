@@ -28,6 +28,7 @@ dependencies:
   local_auth: ^2.1.8
   url_launcher: ^6.1.5
   fl_chart: ^0.30.0
+  geolocator: ^10.0.0
   
 dev_dependencies:
   flutter_test:
