@@ -6,11 +6,16 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
+    <!-- Permiso para el acceso a la ubicación, necesario para Google Maps -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <!-- Configuración general de la aplicación -->
     <application
         android:label="integrador"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -25,7 +30,7 @@
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
 
-            <!-- Google Play Services (necesario para autenticación biométrica en algunos casos) -->
+            <!-- Google Play Services (necesario para la integración de Google Maps y otros servicios de Google) -->
             <meta-data
                 android:name="com.google.android.gms.version"
                 android:value="@integer/google_play_services_version" />
@@ -41,6 +46,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Configuración de la clave API de Google Maps -->
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyBM7KYgD0A55VaZ1_Hr05crakPRCdZy30U" /> <!-- Reemplaza con tu propia API Key -->
     </application>
 
     <!-- Declaración para actividades de procesamiento de texto -->
@@ -50,4 +60,5 @@
             <data android:mimeType="text/plain" />
         </intent>
     </queries>
+
 </manifest>

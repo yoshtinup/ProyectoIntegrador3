@@ -254,7 +254,7 @@ class _HomeAdminViewState extends State<HomeAdminView> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => GuestListView(guests: guests),
+                            builder: (context) => const  GuestListView() ,
                           ),
                         );
                       },
