@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:geolocator/geolocator.dart';
 
 class UserDashboardView extends StatefulWidget {
   const UserDashboardView({Key? key}) : super(key: key);
@@ -18,6 +19,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _eventoController = TextEditingController();
   final TextEditingController _lugarController = TextEditingController();
+
   final String codigo = "";
   String qrData = "";
   bool _showQR = false;
@@ -29,7 +31,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     final url = Uri.parse('http://54.235.133.98:5000/analyze');
     try {
       final responses = await Future.wait([
-
         http.post(
           url,
           headers: {'Content-Type': 'application/json'},
@@ -169,15 +170,69 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return null;
     }
   }
-//funxcion para extraer el ultimo codigo 
+//funxcion para extraer el ultimo codigo
+
+  Future<Position?> getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Verificar si el servicio de ubicación está habilitado
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Servicio de ubicación deshabilitado
+      print("El servicio de ubicación está deshabilitado.");
+      return null;
+    }
+
+    // Verificar permisos de ubicación
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permiso denegado
+        print("Permiso de ubicación denegado.");
+        return null;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permiso denegado para siempre
+      print(
+          "Permiso de ubicación denegado permanentemente. No se puede solicitar.");
+      return null;
+    }
+
+    // Obtener la ubicación actual
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      print("Latitud: ${position.latitude}, Longitud: ${position.longitude}");
+      return position;
+    } catch (e) {
+      print("Error al obtener la ubicación: $e");
+      return null;
+    }
+  }
+
+  Future<String?> fetchLocation() async {
+    Position? position = await getCurrentLocation();
+    if (position != null) {
+      return "${position.latitude}, ${position.longitude}";
+    } else {
+      print("No se pudo obtener la ubicación.");
+      return null;
+    }
+  }
+
   Future<void> _sendJsonToEndpoint(String imageUrl) async {
     final codigo = await fetchLastId();
+     final lugar = await fetchLocation();
     final jsonData = {
       'tipo': _tipoController,
-      'codigo':codigo,
+      'codigo': codigo,
       'telefonoTaxi': _phoneController.text,
       'evento': _eventoController.text,
-      'lugar': _lugarController.text,
+      'lugar': lugar,
       'url': imageUrl,
     };
 
@@ -215,12 +270,13 @@ class _UserDashboardViewState extends State<UserDashboardView> {
   }
 
   void _generateQRCode() async {
+    final lugar = await fetchLocation();
     final codigo = await fetchLastId();
     if (_tipoController == null ||
-         codigo == null||
+        codigo == null ||
         _phoneController.text.isEmpty ||
         _eventoController.text.isEmpty ||
-        _lugarController.text.isEmpty ||
+        lugar == null||
         _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -248,7 +304,7 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       'codigo': codigo,
       'telefonoTaxi': _phoneController.text,
       'evento': _eventoController.text,
-      'lugar': _lugarController.text,
+      'lugar': lugar,
       'ImagenURL': imageUrl,
     };
 
@@ -383,6 +439,21 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _setCurrentLocation(); // Obtener la ubicación al iniciar la vista
+  }
+
+void _setCurrentLocation() async {
+  String? location = await fetchLocation(); // Obtiene las coordenadas
+  if (location != null) {
+    setState(() {
+      _lugarController.text = location; // Actualiza el texto del controlador
+    });
+  }
+}
+
   Widget _buildInputView() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -412,8 +483,9 @@ class _UserDashboardViewState extends State<UserDashboardView> {
         const SizedBox(height: 16),
         _buildTextField(
           controller: _lugarController,
-          label: 'Dirección',
-          icon: Icons.directions,
+          label: 'Dirección (Coordenadas)',
+          icon: Icons.location_on,
+          readOnly: true, 
         ),
         const SizedBox(height: 16),
         ElevatedButton(
@@ -482,31 +554,33 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-  }) {
-    return TextField(
-      controller: controller,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.cyanAccent),
-        prefixIcon: Icon(icon, color: Colors.cyanAccent),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.cyanAccent),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.black.withOpacity(0.8),
+Widget _buildTextField({
+  required TextEditingController controller,
+  required String label,
+  required IconData icon,
+  bool readOnly = false, // Agrega el parámetro opcional readOnly con valor por defecto
+}) {
+  return TextField(
+    controller: controller,
+    readOnly: readOnly, // Controla si el campo es de solo lectura o editable
+    style: const TextStyle(color: Colors.white),
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.cyanAccent),
+      prefixIcon: Icon(icon, color: Colors.cyanAccent),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.cyanAccent),
       ),
-    );
-  }
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.black.withOpacity(0.8),
+    ),
+  );
+}
 
   ButtonStyle _buttonStyle() {
     return ElevatedButton.styleFrom(
