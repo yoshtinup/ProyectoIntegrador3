@@ -1,12 +1,13 @@
 name: integrador
 description: "A new Flutter project."
 
-# Esta línea evita que el paquete se publique accidentalmente en pub.dev
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+# Evita la publicación accidental en pub.dev
+publish_to: 'none' 
 
 # Define el número de versión y build de tu aplicación.
 version: 1.0.0+1
 
+# Define la versión del SDK de Dart que tu proyecto soporta.
 environment:
   sdk: '>=3.3.0 <4.0.0'
 
@@ -17,7 +18,7 @@ dependencies:
   qr: ^2.0.1
   qr_flutter: ^4.0.0
   cupertino_icons: ^1.0.6
-  http: ^0.13.3
+  http: ^0.13.6 # Usa una versión más reciente compatible.
   twilio_flutter: ^0.0.9
   shared_preferences: ^2.2.2
   permission_handler: ^10.2.0
@@ -27,8 +28,8 @@ dependencies:
   path_provider: ^2.0.9
   local_auth: ^2.1.8
   url_launcher: ^6.1.5
-  fl_chart: ^0.30.0
-  
+  fl_chart: ^0.30.0 # Compatible con tu código.
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -49,6 +50,7 @@ flutter:
     - assets/QR.png
     - assets/Duki.jpg
 
+# Configuración para Flutter Launcher Icons.
 flutter_icons:
   android: true
   ios: true
