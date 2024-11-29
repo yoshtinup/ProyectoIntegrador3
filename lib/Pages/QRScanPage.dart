@@ -19,6 +19,7 @@ class _QRScanPageState extends State<QRScanPage> {
   void _processQRContent(String content) {
     try {
       final jsonData = json.decode(content);
+      print(jsonData);
 
       // Actualizar la lista de invitados
       widget.onUpdateGuests(jsonData);
@@ -105,7 +106,8 @@ class _QRScanPageState extends State<QRScanPage> {
                       onDetect: (capture) {
                         final List<Barcode> barcodes = capture.barcodes;
                         for (final barcode in barcodes) {
-                          _processQRContent(barcode.rawValue ?? 'Código QR no válido');
+                          _processQRContent(
+                              barcode.rawValue ?? 'Código QR no válido');
                         }
                       },
                     ),

@@ -146,6 +146,8 @@ class MiQR extends StatelessWidget {
                             'evento': item['evento'] ?? '',
                             'tipo': item['tipo'] ?? '',
                             'ImagenURL': item['ImagenURL'] ?? '',
+                            'status': item['status'] ?? '',
+                            'idcodigo': item['idcodigo'] ?? ''
                           };
 
                           final jsonString = jsonEncode(filteredData);

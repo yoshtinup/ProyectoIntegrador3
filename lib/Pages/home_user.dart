@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class UserDashboardView extends StatefulWidget {
   const UserDashboardView({Key? key}) : super(key: key);
@@ -25,7 +26,35 @@ class _UserDashboardViewState extends State<UserDashboardView> {
   String qrData = "";
   bool _showQR = false;
   File? _selectedImage;
-
+  LatLng _selectedLocation = LatLng(19.432608, -99.133209); 
+  Set<Marker> _markers = {};  // Conjunto de marcadores
+ late GoogleMapController mapController;  
+void _onTap(LatLng location) {
+  setState(() {
+    _selectedLocation = location;  // Actualizar la ubicación seleccionada
+    _lugarController.text = "${location.latitude}, ${location.longitude}";  // Actualizar el campo de texto con las coordenadas
+    _markers = {
+      Marker(
+        markerId: MarkerId('selectedLocation'),  // Identificador único para el marcador
+        position: location,  // La posición del marcador es la ubicación seleccionada
+        infoWindow: InfoWindow(title: 'Ubicación seleccionada'),  // Ventana emergente que muestra información
+      ),
+    };
+  });
+}// Controlador para el mapa
+Widget _buildGoogleMap() {
+  return GoogleMap(
+    initialCameraPosition: CameraPosition(
+      target: _selectedLocation,
+      zoom: 14,
+    ),
+    onMapCreated: (GoogleMapController controller) {
+      mapController = controller;  // Asignar el controlador al mapa
+    },
+    markers: _markers,  // Mostrar los marcadores en el mapa
+    onTap: _onTap, // Detectar el toque del usuario en el mapa
+  );
+}
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _validateInputs() async {
@@ -507,6 +536,13 @@ void _generateQRCode() async {
           icon: Icons.location_on,
           readOnly: true,
         ),
+// En el formulario de entrada se muestra el mapa:
+        Container(
+          height: 300,
+          width: double.infinity,
+          child: _buildGoogleMap(),  // Aquí se inserta el mapa en la interfaz de usuario
+        ),
+
         const SizedBox(height: 16),
         _buildTextField(
           controller: _nombreController,
