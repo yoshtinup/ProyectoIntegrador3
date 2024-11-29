@@ -316,7 +316,6 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       'evento': _eventoController.text,
       'lugar': lugar,
       'nombre': _nombreController.text,
-      'status': _statusController,
       'ImagenURL': imageUrl,
     };
 
