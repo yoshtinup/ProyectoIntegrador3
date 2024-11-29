@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -14,9 +13,7 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late GoogleMapController _controller;
   late LatLng _userLocation;
-  late LatLng _myLocation;
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {};
 
@@ -24,7 +21,6 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _parseLocation();
-    _getCurrentLocation();
   }
 
   // Parsear la ubicación del usuario
@@ -35,28 +31,12 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _userLocation = LatLng(lat, lon);
     });
-  }
-
-  // Obtener la ubicación actual del dispositivo
-  Future<void> _getCurrentLocation() async {
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    setState(() {
-      _myLocation = LatLng(position.latitude, position.longitude);
-    });
     _addMarkers();
   }
 
-  // Agregar los marcadores de origen y destino
+  // Agregar los marcadores de la ubicación del usuario
   void _addMarkers() {
     setState(() {
-      // Marcador para la ubicación del dispositivo (origen)
-      _markers.add(Marker(
-        markerId: MarkerId('my-location'),
-        position: _myLocation,
-        infoWindow: InfoWindow(title: 'Mi Ubicación'),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-      ));
-
       // Marcador para la ubicación del usuario (destino)
       _markers.add(Marker(
         markerId: MarkerId('user-location'),
@@ -75,7 +55,9 @@ class _MapScreenState extends State<MapScreen> {
 
   // Obtener la ruta entre la ubicación actual (origen) y la ubicación del usuario (destino)
   Future<void> _getRoute() async {
-    final url = 'https://maps.googleapis.com/maps/api/directions/json?origin=${_myLocation.latitude},${_myLocation.longitude}&destination=${_userLocation.latitude},${_userLocation.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY';
+    // Debes proporcionar la ubicación de origen manualmente si no usas la ubicación del dispositivo
+    final origin = LatLng(19.432608, -99.133209); // Ejemplo de ubicación de origen
+    final url = 'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${_userLocation.latitude},${_userLocation.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -122,7 +104,7 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
         ),
-        child: _myLocation == null || _userLocation == null
+        child: _userLocation == null
             ? const Center(child: CircularProgressIndicator())
             : Container(
                 margin: const EdgeInsets.all(16.0), // Margen alrededor del mapa
@@ -142,11 +124,11 @@ class _MapScreenState extends State<MapScreen> {
                 ),
                 child: GoogleMap(
                   initialCameraPosition: CameraPosition(
-                    target: _myLocation,
+                    target: _userLocation,
                     zoom: 14.0, // Nivel de zoom del mapa
                   ),
                   onMapCreated: (GoogleMapController controller) {
-                    _controller = controller;
+                    // No es necesario almacenar el controlador en este caso
                   },
                   markers: _markers,
                   polylines: _polylines,
