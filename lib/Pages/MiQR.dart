@@ -105,23 +105,9 @@ class MiQR extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: screenHeight * 0.03), // Espaciado dinámico
-              // Contenedor del QR usando FutureBuilder
-              Container(
-                width: screenWidth * 0.6, // 60% del ancho de la pantalla
-                height: screenWidth * 0.6, // Mantener proporción cuadrada
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.cyanAccent, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.cyanAccent.withOpacity(0.6),
-                      blurRadius: 15,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-                child: FutureBuilder<List<Map<String, dynamic>>>(
+              // Contenedor para los QR usando FutureBuilder
+              Expanded(
+                child: FutureBuilder<List<Map<String, dynamic>>>( // Usamos Expanded para llenar el espacio disponible
                   future: fetchQRData(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -149,28 +135,47 @@ class MiQR extends StatelessWidget {
                         );
                       }
 
-                      // Usamos ListView para mostrar todos los QR
+                      // Usamos ListView para mostrar cada QR en su propia casilla
                       return ListView.builder(
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, index) {
                           final item = snapshot.data![index];
                           final filteredData = {
-                            'tipo': item['tipo'] ?? '',
-                            'evento': item['evento'] ?? '',
-                            'lugar': item['lugar'] ?? '',
+                            'nombre': item['nombre'] ?? '',
                             'telefonoTaxi': item['telefonoTaxi'] ?? '',
+                            'evento': item['evento'] ?? '',
+                            'tipo': item['tipo'] ?? '',
                             'ImagenURL': item['ImagenURL'] ?? '',
                           };
 
                           final jsonString = jsonEncode(filteredData);
 
                           return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: QrImage(
-                              data: jsonString,
-                              version: QrVersions.auto, // Selecciona automáticamente la versión
-                              size: screenWidth * 0.6,
-                              backgroundColor: const Color.fromARGB(255, 255, 255, 255), // Fondo blanco
+                            padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 15.0), // Espaciado entre cada QR
+                            child: Center(  // Centrado horizontalmente
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(color: Colors.cyanAccent, width: 2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.cyanAccent.withOpacity(0.6),
+                                      blurRadius: 10,
+                                      spreadRadius: 5,
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(15), // Borde redondeado para el QR
+                                  child: QrImage(
+                                    data: jsonString,
+                                    version: QrVersions.auto, // Selecciona automáticamente la versión
+                                    size: screenWidth * 0.6, // Tamaño del QR dentro de la casilla
+                                    backgroundColor: const Color.fromARGB(255, 255, 255, 255), // Fondo blanco
+                                  ),
+                                ),
+                              ),
                             ),
                           );
                         },
@@ -179,7 +184,7 @@ class MiQR extends StatelessWidget {
                   },
                 ),
               ),
-              SizedBox(height: screenHeight * 0.02), // Espaciado dinámico
+              SizedBox(height: screenHeight * 0.05), // Espaciado dinámico
               const Text(
                 'Muestra este código para tu acceso.',
                 style: TextStyle(
