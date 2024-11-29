@@ -230,128 +230,137 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     }
   }
 
-  Future<void> _sendJsonToEndpoint(String imageUrl) async {
-    final codigo = await fetchLastId();
-    final lugar = await fetchLocation();
-    final jsonData = {
-      'tipo': _tipoController,
-      'codigo': codigo,
-      'telefonoTaxi': _phoneController.text,
-      'evento': _eventoController.text,
-      'lugar': lugar,
-      'nombre': _nombreController.text,
-      'status': _statusController,
-      'url': imageUrl,
-    };
+Future<String?> _sendJsonToEndpoint(String imageUrl) async {
+  final codigo = await fetchLastId();
+  final lugar = await fetchLocation();
+  final jsonData = {
+    'tipo': _tipoController,
+    'codigo': codigo,
+    'telefonoTaxi': _phoneController.text,
+    'evento': _eventoController.text,
+    'lugar': lugar,
+    'nombre': _nombreController.text,
+    'status': _statusController,
+    'url': imageUrl,
+  };
 
-    final url =
-        Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/boleto');
+  final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/boleto');
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(jsonData),
-      );
+  try {
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(jsonData),
+    );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Datos enviados exitosamente al endpoint adicional'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        throw Exception(
-            'Error al enviar los datos: ${response.statusCode}, ${response.body}');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al enviar los datos: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      var data = jsonDecode(response.body);
+      String idcodigo = data['idcodigo']; // Suponiendo que la respuesta tiene 'idcodigo'
+      return idcodigo;  // Devuelve el idcodigo
+    } else {
+      throw Exception(
+          'Error al enviar los datos: ${response.statusCode}, ${response.body}');
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error al enviar los datos: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return null;  // Si hay error, retorna null
+  }
+}
+
+void _generateQRCode() async {
+  final lugar = await fetchLocation();
+  final codigo = await fetchLastId();
+  
+  if (_tipoController == null ||
+      codigo == null ||
+      _phoneController.text.isEmpty ||
+      _eventoController.text.isEmpty ||
+      lugar == null ||
+      _nombreController.text.isEmpty ||
+      _statusController == null ||
+      _selectedImage == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Por favor completa todos los campos y selecciona una imagen'),
+        backgroundColor: Colors.black,
+      ),
+    );
+    return;
   }
 
-  void _generateQRCode() async {
-    final lugar = await fetchLocation();
-    final codigo = await fetchLastId();
-    if (_tipoController == null ||
-        codigo == null ||
-        _phoneController.text.isEmpty ||
-        _eventoController.text.isEmpty ||
-        lugar == null ||
-        _nombreController.text.isEmpty ||
-        _statusController == null ||
-        _selectedImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Por favor completa todos los campos y selecciona una imagen'),
-          backgroundColor: Colors.black,
-        ),
-      );
-      return;
-    }
-
-    final imageUrl = await _uploadFile(_selectedImage!, 'upload');
-    if (imageUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error al subir la imagen. Intenta nuevamente.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final userData = { 
-      'nombre': _nombreController.text,
-      'telefonoTaxi': _phoneController.text,
-      'codigo': codigo,
-      'tipo': _tipoController,
-      'evento': _eventoController.text,
-      'lugar': lugar,
-      'ImagenURL': imageUrl,
-    };
-
-    setState(() {
-      qrData = jsonEncode(userData);
-    });
-
-    final qrFile = await _saveQrAsImage();
-    if (qrFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content:
-              Text('Error al generar el archivo del QR. Intenta nuevamente.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final qrUrl = await _uploadFile(qrFile, 'save-qr');
-    if (qrUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error al subir el QR. Intenta nuevamente.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    await _sendJsonToEndpoint(imageUrl);
-
-    setState(() {
-      _showQR = true;
-    });
+  final imageUrl = await _uploadFile(_selectedImage!, 'upload');
+  if (imageUrl == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error al subir la imagen. Intenta nuevamente.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
   }
+
+  // Aquí obtienes el idcodigo
+  String? idcodigo = await _sendJsonToEndpoint(imageUrl);
+  if (idcodigo == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error al obtener el idcodigo.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  // Crear el userData con el idcodigo
+  final userData = {
+    'nombre': _nombreController.text,
+    'telefonoTaxi': _phoneController.text,
+    'codigo': codigo,
+    'tipo': _tipoController,
+    'evento': _eventoController.text,
+    'lugar': lugar,
+    "idcodigo": idcodigo,  // Aquí agregas el idcodigo recibido
+    'ImagenURL': imageUrl,
+  };
+
+  setState(() {
+    qrData = jsonEncode(userData);
+  });
+
+  final qrFile = await _saveQrAsImage();
+  if (qrFile == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error al generar el archivo del QR. Intenta nuevamente.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  final qrUrl = await _uploadFile(qrFile, 'save-qr');
+  if (qrUrl == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Error al subir el QR. Intenta nuevamente.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  setState(() {
+    _showQR = true;
+  });
+}
+
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
