@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:integrador/Pages/map_screen.dart';
 import 'dart:convert';
 
-
 class GuestListView extends StatefulWidget {
   const GuestListView({Key? key}) : super(key: key);
 
@@ -98,15 +97,36 @@ class _GuestListViewState extends State<GuestListView> {
                         ),
                         child: ListTile(
                           title: Text(
-                            guest['evento'] ?? 'Sin nombre',
+                            'Nombre: ${guest['nombre'] ?? 'Sin nombre'}',
                             style: const TextStyle(color: Colors.white, fontSize: 16),
                           ),
-                          subtitle: Text(
-                            'Estado: ${guest['tipo'] ?? 'Desconocido'}',
-                            style: TextStyle(
-                              color: Colors.red, // Aquí puedes cambiar el color basado en el estado
-                              fontWeight: FontWeight.bold,
-                            ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+
+                              Text(
+                                'Teléfono Taxi: ${guest['telefonoTaxi'] ?? 'No disponible'}',
+                                style: const TextStyle(color: Colors.white70, fontSize: 14),
+                              ),
+                              Text(
+                                'Evento: ${guest['evento'] ?? 'Sin evento'}',
+                                style: const TextStyle(color: Colors.white70, fontSize: 14),
+                              ),
+                              Text(
+                                'Tipo: ${guest['tipo'] ?? 'Desconocido'}',
+                                style: TextStyle(
+                                  color: Colors.red, // Aquí puedes cambiar el color basado en el tipo
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Estado: ${guest['status'] ?? 'Desconocido'}',
+                                style: TextStyle(
+                                  color: Colors.green, // Puedes cambiar el color según el estado
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                           onTap: () {
                             // Navegar al MapScreen con el lugar (coordenadas)

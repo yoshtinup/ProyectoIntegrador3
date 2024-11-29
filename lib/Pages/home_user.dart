@@ -309,13 +309,13 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       return;
     }
 
-    final userData = {
-      'tipo': _tipoController,
-      'codigo': codigo,
+    final userData = { 
+      'nombre': _nombreController.text,
       'telefonoTaxi': _phoneController.text,
+      'codigo': codigo,
+      'tipo': _tipoController,
       'evento': _eventoController.text,
       'lugar': lugar,
-      'nombre': _nombreController.text,
       'ImagenURL': imageUrl,
     };
 
