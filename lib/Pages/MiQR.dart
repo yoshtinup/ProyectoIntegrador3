@@ -6,9 +6,8 @@ import 'package:qr_flutter/qr_flutter.dart'; // Mejor opción para generar QR en
 class MiQR extends StatelessWidget {
   const MiQR({Key? key}) : super(key: key);
 
-
   // Función para obtener los datos del QR desde la API
-  Future<Map<String, dynamic>> fetchQRData() async {
+  Future<List<Map<String, dynamic>>> fetchQRData() async {
     const apiUrl = 'https://apipulserelastik.integrador.xyz/api/v1/boletos';
 
     try {
@@ -18,17 +17,27 @@ class MiQR extends StatelessWidget {
         print(response.body); // Imprimir el JSON completo en la consola
 
         final data = jsonDecode(response.body) as List<dynamic>; // Lista de elementos
-        // Filtrar por el id 6
-        final filteredItem = data.firstWhere(
-          (item) => item['id'] == 16,
-          orElse: () => throw Exception('No se encontró el ID 6'),
-        );
+        // Filtrar por el código
+        final String codigo = await fetchCodigo();
 
-        // Renombrar la clave "url" a "ImagenURL"
-        filteredItem['ImagenURL'] = filteredItem['url']; // Agregar "ImagenURL" al objeto
-        filteredItem.remove('url'); // Eliminar la clave "url" si no se necesita
+        // Obtener todos los elementos que tengan el mismo código
+        final filteredItems = data.where(
+          (item) => item['codigo'] == codigo,
+        ).toList();  // Convierte el Iterable en una lista
 
-        return filteredItem; // Devuelve el objeto con la clave renombrada
+        if (filteredItems.isEmpty) {
+          throw Exception('No se encontró ningún item con el código $codigo');
+        }
+
+        // Asegurarse de que todos los elementos sean del tipo Map<String, dynamic>
+        final List<Map<String, dynamic>> result = filteredItems.map((item) {
+          // Renombrar la clave "url" a "ImagenURL" para cada elemento
+          item['ImagenURL'] = item['url']; // Agregar "ImagenURL" al objeto
+          item.remove('url'); // Eliminar la clave "url"
+          return item as Map<String, dynamic>; // Asegurarse de que el tipo sea Map<String, dynamic>
+        }).toList();
+
+        return result; // Devuelve la lista de objetos con la clave renombrada
       } else {
         throw Exception('Error al obtener los datos de la API');
       }
@@ -36,16 +45,21 @@ class MiQR extends StatelessWidget {
       throw Exception('Error al conectar con la API: $e');
     }
   }
+
   Future<String> fetchCodigo() async {
-    final url = Uri.parse('http://localhost:3002/api/v1/verific');
+    final url = Uri.parse('https://apipulserelastik.integrador.xyz/api/v1/verific');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       List<dynamic> jsonResponse = json.decode(response.body);
 
-      // Extraer el primer código
+      // Verifica la longitud de la respuesta
+      print('Longitud de la respuesta JSON: ${jsonResponse.length}');
+      print(jsonResponse);  // Imprimir la respuesta completa
+
       if (jsonResponse.isNotEmpty) {
-        String codigo = jsonResponse[0]['codigo'];
+        String codigo = jsonResponse.last['codigo'];
+        print('Último código extraído: $codigo');
         return codigo;
       } else {
         throw Exception('No se encontraron datos en la respuesta');
@@ -107,7 +121,7 @@ class MiQR extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: FutureBuilder<Map<String, dynamic>>(
+                child: FutureBuilder<List<Map<String, dynamic>>>(
                   future: fetchQRData(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -125,24 +139,41 @@ class MiQR extends StatelessWidget {
                         ),
                       );
                     } else {
-                      // Convertir solo campos relevantes a cadena para el QR
-                      final filteredData = {
-                        'tipo': snapshot.data!['tipo'] ?? '',
-                        'evento': snapshot.data!['evento'] ?? '',
-                        'lugar': snapshot.data!['lugar'] ?? '',
-                        'telefonoTaxi': snapshot.data!['telefonoTaxi'] ?? '',
-                        'ImagenURL': snapshot.data!['ImagenURL'] ?? '',
-                      };
+                      if (snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'No se encontraron datos para este código.',
+                            style: TextStyle(color: Colors.redAccent),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
 
-                      final jsonString = jsonEncode(filteredData);
+                      // Usamos ListView para mostrar todos los QR
+                      return ListView.builder(
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          final item = snapshot.data![index];
+                          final filteredData = {
+                            'tipo': item['tipo'] ?? '',
+                            'evento': item['evento'] ?? '',
+                            'lugar': item['lugar'] ?? '',
+                            'telefonoTaxi': item['telefonoTaxi'] ?? '',
+                            'ImagenURL': item['ImagenURL'] ?? '',
+                          };
 
-                      // Usar QrImage para generar el QR
-                      return QrImage(
-                        data: jsonString,
-                        version: QrVersions.auto, // Selecciona automáticamente la versión
-                        size: screenWidth * 0.6,
-                        backgroundColor:
-                            const Color.fromARGB(255, 255, 255, 255), // Fondo blanco
+                          final jsonString = jsonEncode(filteredData);
+
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: QrImage(
+                              data: jsonString,
+                              version: QrVersions.auto, // Selecciona automáticamente la versión
+                              size: screenWidth * 0.6,
+                              backgroundColor: const Color.fromARGB(255, 255, 255, 255), // Fondo blanco
+                            ),
+                          );
+                        },
                       );
                     }
                   },
