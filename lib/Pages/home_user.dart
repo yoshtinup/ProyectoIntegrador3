@@ -16,10 +16,11 @@ class UserDashboardView extends StatefulWidget {
 
 class _UserDashboardViewState extends State<UserDashboardView> {
   String? _tipoController = 'VIP';
+  final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _eventoController = TextEditingController();
   final TextEditingController _lugarController = TextEditingController();
-
+  final String _statusController = "pendiente";
   final String codigo = "";
   String qrData = "";
   bool _showQR = false;
@@ -45,6 +46,11 @@ class _UserDashboardViewState extends State<UserDashboardView> {
           url,
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'message': _lugarController.text}),
+        ),
+        http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'message': _nombreController.text}),
         ),
       ]);
 
@@ -226,13 +232,15 @@ class _UserDashboardViewState extends State<UserDashboardView> {
 
   Future<void> _sendJsonToEndpoint(String imageUrl) async {
     final codigo = await fetchLastId();
-     final lugar = await fetchLocation();
+    final lugar = await fetchLocation();
     final jsonData = {
       'tipo': _tipoController,
       'codigo': codigo,
       'telefonoTaxi': _phoneController.text,
       'evento': _eventoController.text,
       'lugar': lugar,
+      'nombre': _nombreController.text,
+      'status': _statusController,
       'url': imageUrl,
     };
 
@@ -276,7 +284,9 @@ class _UserDashboardViewState extends State<UserDashboardView> {
         codigo == null ||
         _phoneController.text.isEmpty ||
         _eventoController.text.isEmpty ||
-        lugar == null||
+        lugar == null ||
+        _nombreController.text.isEmpty ||
+        _statusController == null ||
         _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -305,6 +315,8 @@ class _UserDashboardViewState extends State<UserDashboardView> {
       'telefonoTaxi': _phoneController.text,
       'evento': _eventoController.text,
       'lugar': lugar,
+      'nombre': _nombreController.text,
+      'status': _statusController,
       'ImagenURL': imageUrl,
     };
 
@@ -445,14 +457,14 @@ class _UserDashboardViewState extends State<UserDashboardView> {
     _setCurrentLocation(); // Obtener la ubicación al iniciar la vista
   }
 
-void _setCurrentLocation() async {
-  String? location = await fetchLocation(); // Obtiene las coordenadas
-  if (location != null) {
-    setState(() {
-      _lugarController.text = location; // Actualiza el texto del controlador
-    });
+  void _setCurrentLocation() async {
+    String? location = await fetchLocation(); // Obtiene las coordenadas
+    if (location != null) {
+      setState(() {
+        _lugarController.text = location; // Actualiza el texto del controlador
+      });
+    }
   }
-}
 
   Widget _buildInputView() {
     return Column(
@@ -485,7 +497,13 @@ void _setCurrentLocation() async {
           controller: _lugarController,
           label: 'Dirección (Coordenadas)',
           icon: Icons.location_on,
-          readOnly: true, 
+          readOnly: true,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _nombreController,
+          label: 'Nombre',
+          icon: Icons.person,
         ),
         const SizedBox(height: 16),
         ElevatedButton(
@@ -554,33 +572,34 @@ void _setCurrentLocation() async {
     );
   }
 
-Widget _buildTextField({
-  required TextEditingController controller,
-  required String label,
-  required IconData icon,
-  bool readOnly = false, // Agrega el parámetro opcional readOnly con valor por defecto
-}) {
-  return TextField(
-    controller: controller,
-    readOnly: readOnly, // Controla si el campo es de solo lectura o editable
-    style: const TextStyle(color: Colors.white),
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Colors.cyanAccent),
-      prefixIcon: Icon(icon, color: Colors.cyanAccent),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.cyanAccent),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool readOnly =
+        false, // Agrega el parámetro opcional readOnly con valor por defecto
+  }) {
+    return TextField(
+      controller: controller,
+      readOnly: readOnly, // Controla si el campo es de solo lectura o editable
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.cyanAccent),
+        prefixIcon: Icon(icon, color: Colors.cyanAccent),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.cyanAccent),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.black.withOpacity(0.8),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.cyanAccent, width: 2),
-      ),
-      filled: true,
-      fillColor: Colors.black.withOpacity(0.8),
-    ),
-  );
-}
+    );
+  }
 
   ButtonStyle _buttonStyle() {
     return ElevatedButton.styleFrom(
