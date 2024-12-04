@@ -44,7 +44,6 @@ flutter:
 
   # Agregar assets al proyecto.
   assets:
-    - assets/prediccion_ventas_diarias.json
     - assets/Logo.png
     - assets/LogoUp.png
     - assets/Paulo.jpg

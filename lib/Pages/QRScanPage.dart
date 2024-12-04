@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'dart:convert';
 import 'QRDetailsPage.dart';
-
+import 'package:http/http.dart' as http;
 class QRScanPage extends StatefulWidget {
   final Function(Map<String, dynamic>) onUpdateGuests;
 
@@ -16,34 +16,133 @@ class _QRScanPageState extends State<QRScanPage> {
   MobileScannerController cameraController = MobileScannerController();
   bool isNavigating = false; // Control para evitar múltiples navegaciones
 
-  void _processQRContent(String content) {
-    try {
-      final jsonData = json.decode(content);
-      print(jsonData);
 
-      // Actualizar la lista de invitados
-      widget.onUpdateGuests(jsonData);
+void _processQRContent(String content) async {
+  try {
+    final jsonData = json.decode(content);
+    print("[INFO] Datos del QR procesados: $jsonData");
 
-      if (!isNavigating) {
-        isNavigating = true;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => QRDetailsPage(jsonData: jsonData),
-          ),
-        ).then((_) {
-          isNavigating = false;
-        });
+    // Verificar y actualizar el estado del boleto
+    if (jsonData.containsKey('idcodigo')) {
+      final String idcodigo = jsonData['idcodigo'];
+      print("[INFO] idcodigo encontrado: $idcodigo. Intentando actualizar el estado del boleto...");
+      
+      // Actualiza el estado del boleto
+      await _verificarYActualizarBoleto(idcodigo); // Cambia 'utilizado' al estado deseado
+
+      // Verifica el estado actualizado del boleto
+      final estadoActualizado = await _obtenerEstadoBoleto(idcodigo);
+      if (estadoActualizado != null) {
+        print("[INFO] Estado actualizado del boleto: $estadoActualizado");
+        jsonData['status'] = estadoActualizado; // Actualiza el JSON con el estado más reciente
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('El código QR no contiene datos válidos'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } else {
+      print("[WARNING] idcodigo no encontrado en el contenido del QR.");
     }
+
+    if (!isNavigating) {
+      isNavigating = true;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QRDetailsPage(jsonData: jsonData),
+        ),
+      ).then((_) {
+        isNavigating = false;
+        print("[INFO] Retornado desde QRDetailsPage.");
+      });
+    }
+  } catch (e) {
+    print("[ERROR] Error procesando el contenido del QR: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('El código QR no contiene datos válidos'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
+
+Future<String?> _obtenerEstadoBoleto(String idcodigo) async {
+  const String apiUrl = "https://apipulserelastik.integrador.xyz/api/v1/boleto";
+  try {
+    print("[INFO] Consultando el estado del boleto con idcodigo: $idcodigo");
+    final response = await http.get(Uri.parse("$apiUrl/$idcodigo"));
+
+    if (response.statusCode == 200) {
+      final boletoData = json.decode(response.body);
+      print("[INFO] Respuesta del boleto: $boletoData");
+      if (boletoData != null && boletoData.containsKey('status')) {
+        return boletoData['status'];
+      } else {
+        print("[WARNING] El boleto no contiene un estado.");
+        return null;
+      }
+    } else {
+      print("[ERROR] Error al consultar el estado del boleto. Código: ${response.statusCode}, Respuesta: ${response.body}");
+      return null;
+    }
+  } catch (e) {
+    print("[ERROR] Error al obtener el estado del boleto: $e");
+    return null;
+  }
+}
+
+Future<void> _verificarYActualizarBoleto(String idcodigo) async {
+  const String apiUrl = "https://apipulserelastik.integrador.xyz/api/v1/boleto";
+  try {
+    print("[INFO] Consultando el estado del boleto con idcodigo: $idcodigo");
+    final response = await http.get(Uri.parse("$apiUrl/$idcodigo"));
+
+    if (response.statusCode == 200) {
+      final boletoData = json.decode(response.body);
+      print("[INFO] Respuesta del boleto: $boletoData");
+
+      if (boletoData != null && boletoData.containsKey('status')) {
+        final String estadoActual = boletoData['status'];
+        print("[INFO] Estado actual del boleto: $estadoActual");
+
+        // Determinar el nuevo estado
+        String nuevoEstado;
+        if (estadoActual == 'pendiente') {
+          nuevoEstado = 'adentro';
+        } else if (estadoActual == 'adentro') {
+          nuevoEstado = 'afuera';
+        } else if (estadoActual == 'afuera') {
+          nuevoEstado = 'adentro'; // Cambiar de vuelta a 'adentro'
+        } else {
+          print("[WARNING] Estado desconocido: $estadoActual. No se realizará ningún cambio.");
+          return;
+        }
+
+        print("[INFO] Intentando actualizar el estado del boleto a: $nuevoEstado");
+
+        // Enviar solicitud PUT para actualizar el estado
+        final updateResponse = await http.put(
+          Uri.parse("$apiUrl/$idcodigo"),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: json.encode({
+            "status": nuevoEstado,
+          }),
+        );
+
+        if (updateResponse.statusCode == 200) {
+          print("[SUCCESS] Estado del boleto actualizado exitosamente a '$nuevoEstado'.");
+        } else {
+          print("[ERROR] Error al actualizar el estado del boleto. Código de respuesta: ${updateResponse.statusCode}. Respuesta: ${updateResponse.body}");
+        }
+      } else {
+        print("[ERROR] El boleto no contiene un estado válido.");
+      }
+    } else {
+      print("[ERROR] Error al consultar el boleto. Código de respuesta: ${response.statusCode}. Respuesta: ${response.body}");
+    }
+  } catch (e) {
+    print("[ERROR] Error al verificar o actualizar el boleto: $e");
+  }
+}
 
   @override
   Widget build(BuildContext context) {

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:http/http.dart' as http;
 
 class GraficaScreen extends StatefulWidget {
   const GraficaScreen({Key? key}) : super(key: key);
@@ -20,56 +20,52 @@ class _GraficaScreenState extends State<GraficaScreen> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
     loadJsonData();
-  }
-
-  @override
-  void dispose() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    super.dispose();
   }
 
   Future<void> loadJsonData() async {
     try {
-      final String response =
-          await rootBundle.loadString('assets/prediccion_ventas_diarias.json');
-      final data = json.decode(response);
+      // Cambia esta URL por la del endpoint de tu API
+      final response = await http.get(Uri.parse('http://127.0.0.1:5002/data'));
 
-      setState(() {
-        historicalData = List<FlSpot>.from(
-          data['historical']['dates'].asMap().entries.map(
-            (entry) => FlSpot(
-              entry.key.toDouble(),
-              data['historical']['values'][entry.key],
+      if (response.statusCode == 200) {
+        // Decodificar JSON
+        final data = json.decode(response.body)['contenido'];
+
+        setState(() {
+          // Procesar datos históricos
+          historicalData = List<FlSpot>.from(
+            data['historical']['dates'].asMap().entries.map(
+              (entry) => FlSpot(
+                entry.key.toDouble(),
+                data['historical']['values'][entry.key],
+              ),
             ),
-          ),
-        );
-        forecastData = List<FlSpot>.from(
-          data['forecast']['dates'].asMap().entries.map((entry) {
-            final value = data['forecast']['values'][entry.key];
-            return value != null && value != 0.0
-                ? FlSpot(
-                    (entry.key + data['historical']['dates'].length).toDouble(),
-                    value,
-                  )
-                : null;
-          }).whereType<FlSpot>(),
-        );
+          );
 
-        isLoading = false;
-        hasError = false;
-        animationProgress = 0.0; // La animación comienza en 0
-      });
+          // Procesar datos de pronóstico
+          forecastData = List<FlSpot>.from(
+            data['forecast']['dates'].asMap().entries.map((entry) {
+              final value = data['forecast']['values'][entry.key];
+              return value != null && value != 0.0
+                  ? FlSpot(
+                      (entry.key + data['historical']['dates'].length).toDouble(),
+                      value,
+                    )
+                  : null;
+            }).whereType<FlSpot>(),
+          );
 
-      // Iniciar animación
-      animateForecast();
+          isLoading = false;
+          hasError = false;
+          animationProgress = 0.0; // La animación comienza en 0
+        });
+
+        // Iniciar animación
+        animateForecast();
+      } else {
+        throw Exception('Error al cargar datos: ${response.statusCode}');
+      }
     } catch (e) {
       setState(() {
         isLoading = false;
@@ -156,10 +152,10 @@ class _GraficaScreenState extends State<GraficaScreen> {
                       border: Border.all(color: Colors.cyanAccent, width: 3),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.cyanAccent.withOpacity(0.8), // Color de iluminación
-                          blurRadius: 20, // Difuminado
-                          spreadRadius: 5, // Extensión del brillo
-                          offset: const Offset(0, 0), // Centrado
+                          color: Colors.cyanAccent.withOpacity(0.8),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                          offset: const Offset(0, 0),
                         ),
                       ],
                     ),
@@ -171,7 +167,7 @@ class _GraficaScreenState extends State<GraficaScreen> {
                           )
                         : TweenAnimationBuilder<double>(
                             tween: Tween(begin: 0.0, end: animationProgress),
-                            duration: const Duration(seconds: 100), // Animación más rápida (10 segundos)
+                            duration: const Duration(seconds: 100),
                             builder: (context, value, child) {
                               return LineChart(
                                 LineChartData(
@@ -188,7 +184,7 @@ class _GraficaScreenState extends State<GraficaScreen> {
                                       spots: forecastData
                                           .sublist(
                                             0,
-                                            ((forecastData.length * value).toInt()).clamp(0, forecastData.length), // Limitar el índice
+                                            ((forecastData.length * value).toInt()).clamp(0, forecastData.length),
                                           ),
                                       isCurved: true,
                                       colors: [Colors.green],
